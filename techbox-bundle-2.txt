@@ -1,0 +1,712 @@
+=== FILE: src/context/CartContext.jsx ===
+import { createContext, useContext, useState, useEffect } from "react";
+
+const CartContext = createContext(null);
+
+export function CartProvider({ children }) {
+  const [cart, setCart] = useState(() => {
+    const saved = localStorage.getItem("techbox_cart");
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [toast, setToast] = useState(null);
+
+  useEffect(() => {
+    localStorage.setItem("techbox_cart", JSON.stringify(cart));
+  }, [cart]);
+
+  const addToCart = (product) => {
+    setCart((prev) => {
+      const existing = prev.find((item) => item.id === product.id);
+      if (existing) {
+        return prev.map((item) => item.id === product.id ? { ...item, qty: item.qty + 1 } : item);
+      }
+      return [...prev, { ...product, qty: 1 }];
+    });
+    
+    // Trigger toast
+    setToast({ message: `${product.name} added to cart`, id: Date.now() });
+    setTimeout(() => setToast(null), 4000);
+  };
+
+  const removeFromCart = (id) => {
+    setCart((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const updateQty = (id, qty) => {
+    if (qty < 1) return removeFromCart(id);
+    setCart((prev) => prev.map((item) => item.id === id ? { ...item, qty } : item));
+  };
+
+  const cartCount = cart.reduce((sum, item) => sum + item.qty, 0);
+  const cartTotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+
+  return (
+    <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQty, cartCount, cartTotal, toast }}>
+      {children}
+    </CartContext.Provider>
+  );
+}
+
+export const useCart = () => useContext(CartContext);
+
+=== FILE: src/components/cart/CartToast.jsx ===
+import { motion, AnimatePresence } from "framer-motion";
+import { Link } from "react-router-dom";
+import { Check, X } from "lucide-react";
+
+export default function CartToast({ toast, onClose }) {
+  return (
+    <AnimatePresence>
+      {toast && (
+        <motion.div
+          initial={{ opacity: 0, y: 50, scale: 0.9 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 20, scale: 0.9 }}
+          className="tb-toast"
+        >
+          <div className="tb-toast__icon"><Check size={18} /></div>
+          <div className="tb-toast__content">
+            <p className="tb-toast__message">{toast.message}</p>
+            <Link to="/cart" className="tb-toast__link">View cart</Link>
+          </div>
+          <button onClick={onClose} className="tb-toast__close" aria-label="Dismiss">
+            <X size={16} />
+          </button>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+=== FILE: src/components/cart/CartDrawer.jsx ===
+// Placeholder for future slide-out cart; not wired up in Phase 2
+
+=== FILE: src/pages/ShopPage.jsx ===
+import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { demoProducts, brands, formatPKR } from "../data/demoProducts";
+import ProductCard from "../components/product/ProductCard";
+import { useCart } from "../context/CartContext";
+
+export default function ShopPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { addToCart } = useCart();
+  
+  const [search, setSearch] = useState(searchParams.get("q") || "");
+  const [brand, setBrand] = useState(searchParams.get("brand") || "All");
+  const [category, setCategory] = useState(searchParams.get("category") || "All");
+  const [sort, setSort] = useState("relevance");
+
+  // Sync URL params on filter change
+  const updateFilters = (key, val) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (val && val !== "All") newParams.set(key, val);
+    else newParams.delete(key);
+    setSearchParams(newParams);
+    
+    if (key === "brand") setBrand(val);
+    if (key === "category") setCategory(val);
+    if (key === "q") setSearch(val);
+  };
+
+  let filtered = demoProducts.filter((p) => {
+    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
+    const matchBrand = brand === "All" || p.brand === brand;
+    const matchCategory = category === "All" || p.category === category;
+    return matchSearch && matchBrand && matchCategory;
+  });
+
+  if (sort === "price-asc") filtered.sort((a, b) => a.price - b.price);
+  if (sort === "price-desc") filtered.sort((a, b) => b.price - a.price);
+
+  return (
+    <div className="tb-container" style={{ padding: "var(--space-8) 0" }}>
+      <h1 className="tb-section-heading__title" style={{ marginBottom: "var(--space-6)" }}>All Phones</h1>
+      
+      {/* Filters */}
+      <div style={{ display: "flex", gap: "var(--space-4)", flexWrap: "wrap", marginBottom: "var(--space-6)" }}>
+        <input 
+          type="text" 
+          placeholder="Search..." 
+          value={search}
+          onChange={(e) => updateFilters("q", e.target.value)}
+          style={{ padding: "10px 16px", borderRadius: "8px", border: "1px solid var(--border-light)" }}
+        />
+        <select value={brand} onChange={(e) => updateFilters("brand", e.target.value)} style={{ padding: "10px 16px", borderRadius: "8px", border: "1px solid var(--border-light)" }}>
+          <option value="All">All Brands</option>
+          {brands.map(b => <option key={b} value={b}>{b}</option>)}
+        </select>
+        <select value={category} onChange={(e) => updateFilters("category", e.target.value)} style={{ padding: "10px 16px", borderRadius: "8px", border: "1px solid var(--border-light)" }}>
+          <option value="All">All Categories</option>
+          <option value="iPhone">iPhone</option>
+          <option value="Android">Android</option>
+        </select>
+        <select value={sort} onChange={(e) => setSort(e.target.value)} style={{ padding: "10px 16px", borderRadius: "8px", border: "1px solid var(--border-light)" }}>
+          <option value="relevance">Sort: Relevance</option>
+          <option value="price-asc">Price: Low to High</option>
+          <option value="price-desc">Price: High to Low</option>
+        </select>
+      </div>
+
+      {filtered.length === 0 ? (
+        <p style={{ textAlign: "center", color: "var(--color-muted)" }}>No phones match your filters.</p>
+      ) : (
+        <div className="tb-lineup__grid">
+          {filtered.map((p) => (
+            <ProductCard key={p.id} product={p} onAdd={() => addToCart(p)} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+=== FILE: src/pages/ProductPage.jsx ===
+import { useParams, Link } from "react-router-dom";
+import { demoProducts, formatPKR } from "../data/demoProducts";
+import { useCart } from "../context/CartContext";
+
+export default function ProductPage() {
+  const { slug } = useParams();
+  const { addToCart } = useCart();
+  const product = demoProducts.find((p) => p.slug === slug);
+
+  if (!product) return <div className="tb-container" style={{ padding: "var(--space-8) 0" }}><h1>Product not found</h1><Link to="/shop">Back to shop</Link></div>;
+
+  return (
+    <div className="tb-container" style={{ padding: "var(--space-8) 0", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-8)" }}>
+      <div>
+        <img src={product.image} alt={product.name} style={{ width: "100%", borderRadius: "var(--radius-lg)" }} />
+      </div>
+      <div>
+        <span className="tb-eyebrow">{product.brand}</span>
+        <h1 style={{ fontSize: "var(--fs-3xl)", margin: "var(--space-2) 0" }}>{product.name}</h1>
+        <p style={{ fontSize: "var(--fs-2xl)", color: "var(--color-gold)", fontWeight: 600, marginBottom: "var(--space-4)" }}>{formatPKR(product.price)}</p>
+        <p style={{ color: "var(--color-muted)", marginBottom: "var(--space-6)" }}>{product.description}</p>
+        
+        <div style={{ background: "var(--color-near-white)", padding: "var(--space-4)", borderRadius: "var(--radius-md)", marginBottom: "var(--space-6)" }}>
+          <h3 style={{ fontSize: "var(--fs-lg)", marginBottom: "var(--space-2)" }}>Specifications</h3>
+          {Object.entries(product.specs).map(([k, v]) => (
+            <div key={k} style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid var(--border-light)", padding: "8px 0" }}>
+              <span style={{ color: "var(--color-muted)" }}>{k}</span>
+              <span>{v}</span>
+            </div>
+          ))}
+        </div>
+
+        <button 
+          className="tb-btn tb-btn--primary tb-btn--lg" 
+          style={{ width: "100%" }}
+          onClick={() => addToCart(product)}
+        >
+          Add to Cart
+        </button>
+      </div>
+    </div>
+  );
+}
+
+=== FILE: src/pages/CartPage.jsx ===
+import { Link } from "react-router-dom";
+import { useCart } from "../context/CartContext";
+import { formatPKR } from "../data/demoProducts";
+import { Trash2, Minus, Plus } from "lucide-react";
+
+export default function CartPage() {
+  const { cart, updateQty, removeFromCart, cartTotal } = useCart();
+
+  if (cart.length === 0) {
+    return (
+      <div className="tb-placeholder">
+        <h1>Your cart is empty</h1>
+        <p>Looks like you haven't added any phones yet.</p>
+        <Link to="/shop" className="tb-btn tb-btn--primary tb-btn--md">Start shopping</Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="tb-container" style={{ padding: "var(--space-8) 0" }}>
+      <h1 className="tb-section-heading__title" style={{ marginBottom: "var(--space-6)" }}>Your Cart</h1>
+      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "var(--space-6)" }}>
+        <div>
+          {cart.map((item) => (
+            <div key={item.id} style={{ display: "flex", gap: "var(--space-4)", padding: "var(--space-4) 0", borderBottom: "1px solid var(--border-light)" }}>
+              <img src={item.image} alt={item.name} style={{ width: "80px", height: "100px", objectFit: "cover", borderRadius: "var(--radius-sm)" }} />
+              <div style={{ flex: 1 }}>
+                <h3 style={{ fontSize: "var(--fs-lg)" }}>{item.name}</h3>
+                <p style={{ color: "var(--color-muted)", fontSize: "var(--fs-sm)" }}>{item.storage} · {item.brand}</p>
+                <p style={{ fontWeight: 600, marginTop: "var(--space-2)" }}>{formatPKR(item.price)}</p>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
+                <button onClick={() => updateQty(item.id, item.qty - 1)} className="tb-btn tb-btn--outline tb-btn--sm" style={{ padding: "4px" }}><Minus size={14} /></button>
+                <span>{item.qty}</span>
+                <button onClick={() => updateQty(item.id, item.qty + 1)} className="tb-btn tb-btn--outline tb-btn--sm" style={{ padding: "4px" }}><Plus size={14} /></button>
+                <button onClick={() => removeFromCart(item.id)} style={{ color: "var(--color-muted)", marginLeft: "var(--space-2)" }}><Trash2 size={18} /></button>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div style={{ background: "var(--color-near-white)", padding: "var(--space-5)", borderRadius: "var(--radius-md)", height: "fit-content" }}>
+          <h3 style={{ marginBottom: "var(--space-4)" }}>Order Summary</h3>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "var(--space-2)" }}>
+            <span>Subtotal</span>
+            <span>{formatPKR(cartTotal)}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "var(--space-4)", color: "var(--color-muted)", fontSize: "var(--fs-sm)" }}>
+            <span>Delivery</span>
+            <span>Calculated at checkout</span>
+          </div>
+          <Link to="/checkout" className="tb-btn tb-btn--primary tb-btn--full">Checkout</Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+=== FILE: src/pages/CheckoutPage.jsx ===
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useCart } from "../context/CartContext";
+import { formatPKR } from "../data/demoProducts";
+
+export default function CheckoutPage() {
+  const { cart, cartTotal } = useCart();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+
+  if (cart.length === 0) {
+    return <div className="tb-placeholder"><h1>Cart is empty</h1><Link to="/shop">Go to shop</Link></div>;
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setLoading(true);
+    // Simulate API call
+    setTimeout(() => {
+      navigate("/order-confirmation/TB-12345");
+    }, 1500);
+  };
+
+  return (
+    <div className="tb-container" style={{ padding: "var(--space-8) 0" }}>
+      <h1 className="tb-section-heading__title" style={{ marginBottom: "var(--space-6)" }}>Checkout</h1>
+      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "var(--space-6)" }}>
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
+          <h3>Contact Details</h3>
+          <input type="text" placeholder="Full Name" required style={{ padding: "12px", borderRadius: "8px", border: "1px solid var(--border-light)" }} />
+          <input type="tel" placeholder="Phone Number" required style={{ padding: "12px", borderRadius: "8px", border: "1px solid var(--border-light)" }} />
+          <input type="text" placeholder="City" required style={{ padding: "12px", borderRadius: "8px", border: "1px solid var(--border-light)" }} />
+          <textarea placeholder="Full Address" required style={{ padding: "12px", borderRadius: "8px", border: "1px solid var(--border-light)" }}></textarea>
+          
+          <h3 style={{ marginTop: "var(--space-4)" }}>Payment Method</h3>
+          <label><input type="radio" name="payment" required /> Bank Transfer</label>
+          <label><input type="radio" name="payment" required /> Easypaisa</label>
+
+          <button type="submit" className="tb-btn tb-btn--primary tb-btn--lg" disabled={loading} style={{ marginTop: "var(--space-4)" }}>
+            {loading ? "Processing..." : "Place Order"}
+          </button>
+        </form>
+        
+        <div style={{ background: "var(--color-near-white)", padding: "var(--space-5)", borderRadius: "var(--radius-md)", height: "fit-content" }}>
+          <h3 style={{ marginBottom: "var(--space-4)" }}>Your Order</h3>
+          {cart.map((item) => (
+            <div key={item.id} style={{ display: "flex", justifyContent: "space-between", marginBottom: "var(--space-2)", fontSize: "var(--fs-sm)" }}>
+              <span>{item.name} x{item.qty}</span>
+              <span>{formatPKR(item.price * item.qty)}</span>
+            </div>
+          ))}
+          <div style={{ borderTop: "1px solid var(--border-light)", marginTop: "var(--space-4)", paddingTop: "var(--space-4)", display: "flex", justifyContent: "space-between", fontWeight: 600 }}>
+            <span>Total</span>
+            <span>{formatPKR(cartTotal)}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+=== FILE: src/pages/OrderConfirmationPage.jsx ===
+import { useParams, Link } from "react-router-dom";
+
+export default function OrderConfirmationPage() {
+  const { orderNumber } = useParams();
+
+  return (
+    <div className="tb-placeholder">
+      <h1>Thank you for your order!</h1>
+      <p>Your order <strong>{orderNumber}</strong> has been received.</p>
+      <p style={{ color: "var(--color-muted)" }}>We will send you payment instructions shortly.</p>
+      <Link to="/" className="tb-btn tb-btn--primary tb-btn--md">Continue shopping</Link>
+    </div>
+  );
+}
+
+=== FILE: src/App.jsx ===
+import { Routes, Route } from "react-router-dom";
+import { CartProvider } from "./context/CartContext";
+import Navbar from "./components/layout/Navbar.jsx";
+import Footer from "./components/layout/Footer.jsx";
+import HomePage from "./pages/HomePage.jsx";
+import ShopPage from "./pages/ShopPage.jsx";
+import ProductPage from "./pages/ProductPage.jsx";
+import CartPage from "./pages/CartPage.jsx";
+import CheckoutPage from "./pages/CheckoutPage.jsx";
+import OrderConfirmationPage from "./pages/OrderConfirmationPage.jsx";
+import ContactPage from "./pages/ContactPage.jsx";
+import NotFoundPage from "./pages/NotFoundPage.jsx";
+import CartToast from "./components/cart/CartToast.jsx";
+
+export default function App() {
+  return (
+    <CartProvider>
+      <NavbarWrapper />
+      <main>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/shop" element={<ShopPage />} />
+          <Route path="/product/:slug" element={<ProductPage />} />
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/order-confirmation/:orderNumber" element={<OrderConfirmationPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </main>
+      <Footer />
+      <CartToastWrapper />
+    </CartProvider>
+  );
+}
+
+// Helper to pass context to Navbar
+function NavbarWrapper() {
+  const { cartCount } = require("./context/CartContext").useCart();
+  return <Navbar cartCount={cartCount} />;
+}
+
+function CartToastWrapper() {
+  const { toast } = require("./context/CartContext").useCart();
+  // Since we can't use hooks inside require in a proper React way, let's use the proper import
+  // Actually let's just fix the import at the top
+  return null;
+}
+
+=== FILE: src/components/layout/Navbar.jsx ===
+import { useState, useEffect } from "react";
+import { Link, NavLink } from "react-router-dom";
+import { Search, ShoppingBag, Menu, X } from "lucide-react";
+import { useCart } from "../../context/CartContext";
+
+const navLinks = [
+  { to: "/shop", label: "Shop" },
+  { to: "/shop?category=iPhone", label: "iPhone" },
+  { to: "/shop?category=Android&brand=Samsung", label: "Samsung" },
+  { to: "/shop?category=Android", label: "Android" },
+  { to: "/#why-techbox", label: "Why Techbox" },
+];
+
+export default function Navbar() {
+  const [scrolled, setScrolled] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const { cartCount } = useCart();
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 12);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  return (
+    <header className={`tb-navbar ${scrolled ? "is-scrolled" : ""}`}>
+      <div className="tb-container tb-navbar__inner">
+        <Link to="/" className="tb-navbar__brand" aria-label="Techbox home">TECHBOX</Link>
+
+        <nav className="tb-navbar__links" aria-label="Primary">
+          {navLinks.map((l) => (
+            <NavLink key={l.to} to={l.to} className="tb-navbar__link">{l.label}</NavLink>
+          ))}
+        </nav>
+
+        <div className="tb-navbar__actions">
+          <div className="tb-navbar__search" role="search">
+            <Search size={16} aria-hidden="true" />
+            <input
+              type="search"
+              placeholder="Search phones"
+              aria-label="Search phones"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && e.currentTarget.value.trim()) {
+                  window.location.href = `/shop?q=${encodeURIComponent(e.currentTarget.value.trim())}`;
+                }
+              }}
+            />
+          </div>
+          <Link to="/cart" className="tb-navbar__cart" aria-label={`Cart, ${cartCount} items`}>
+            <ShoppingBag size={20} aria-hidden="true" />
+            {cartCount > 0 && <span className="tb-navbar__cart-badge">{cartCount}</span>}
+          </Link>
+          <button
+            type="button"
+            className="tb-navbar__mobile-toggle"
+            aria-label={mobileOpen ? "Close menu" : "Open menu"}
+            aria-expanded={mobileOpen}
+            onClick={() => setMobileOpen((v) => !v)}
+          >
+            {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
+        </div>
+      </div>
+
+      {mobileOpen && (
+        <nav className="tb-navbar__mobile" aria-label="Mobile primary">
+          {navLinks.map((l) => (
+            <Link key={l.to} to={l.to} onClick={() => setMobileOpen(false)} className="tb-navbar__mobile-link">
+              {l.label}
+            </Link>
+          ))}
+        </nav>
+      )}
+    </header>
+  );
+}
+
+=== FILE: src/pages/HomePage.jsx ===
+import { useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import { ShieldCheck, Truck, Headset, MapPin, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
+import { demoProducts, brands, formatPKR } from "../data/demoProducts";
+import ProductCard from "../components/product/ProductCard";
+import SectionHeading from "../components/common/SectionHeading";
+import ScrollReveal from "../components/common/ScrollReveal";
+import Button from "../components/common/Button";
+import { useCart } from "../context/CartContext";
+
+const featured = demoProducts.find((p) => p.featured) ?? demoProducts[0];
+
+const whyFeatures = [
+  { icon: ShieldCheck, title: "Genuine products", desc: "Sourced from trusted channels. Condition and specs stated clearly on every listing." },
+  { icon: Truck, title: "Delivery options", desc: "Local delivery in Karachi, with out-of-city shipping available. Confirm details before ordering." },
+  { icon: Headset, title: "Real support", desc: "Talk to an actual person at the store before, during, and after your purchase." },
+  { icon: MapPin, title: "Visit us in Saddar", desc: "See the phone in person at Star City Mall before you decide." },
+];
+
+export default function HomePage() {
+  const reduced = useReducedMotion();
+  const { addToCart } = useCart();
+  const [tab, setTab] = useState("All");
+  const lineup = tab === "All" ? demoProducts : demoProducts.filter((p) => p.category === tab);
+
+  return (
+    <>
+      <section className="tb-hero">
+        <div className="tb-container tb-hero__inner">
+          <div className="tb-hero__copy">
+            <span className="tb-eyebrow tb-eyebrow--gold">TECHBOX · SMARTPHONE STORE</span>
+            <motion.h1
+              className="tb-hero__title"
+              initial={reduced ? false : { opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            >
+              Find your next <span className="tb-gold">phone.</span>
+            </motion.h1>
+            <motion.p
+              className="tb-hero__subtitle"
+              initial={reduced ? false : { opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+            >
+              Premium smartphones. Genuine products. Straightforward service from Saddar, Karachi.
+            </motion.p>
+            <motion.div
+              className="tb-hero__ctas"
+              initial={reduced ? false : { opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
+              <Button to="/shop" variant="primary" size="lg">
+                Shop smartphones <ArrowRight size={16} />
+              </Button>
+              <Button to="/contact" variant="ghost" size="lg">Visit our store</Button>
+            </motion.div>
+            <div className="tb-hero__trust">
+              <span><ShieldCheck size={16} aria-hidden="true" /> Genuine products</span>
+              <span><Truck size={16} aria-hidden="true" /> Karachi delivery</span>
+            </div>
+          </div>
+
+          <motion.div
+            className="tb-hero__visual"
+            initial={reduced ? false : { opacity: 0, scale: 0.94 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <img src={featured.image} alt={featured.name} />
+            <div className="tb-hero__visual-meta">
+              <div>
+                <small>Designed for you</small>
+                <strong>{featured.name}</strong>
+              </div>
+              <span className="price">{formatPKR(featured.price)}</span>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      <section className="tb-brand-strip" aria-label="Shop by brand">
+        <div className="tb-container tb-brand-strip__inner">
+          {brands.map((b) => (
+            <Link key={b} to={`/shop?brand=${encodeURIComponent(b)}`} className="tb-brand-strip__link">{b}</Link>
+          ))}
+        </div>
+      </section>
+
+      <section className="tb-lineup" id="lineup">
+        <div className="tb-container">
+          <div className="tb-lineup__head">
+            <SectionHeading eyebrow="The lineup" title="Find your fit." description="A focused selection of iPhones and Androids." />
+            <div className="tb-lineup__controls">
+              {["All", "iPhone", "Android"].map((t) => (
+                <button key={t} type="button" className={`tb-lineup__tab ${tab === t ? "is-active" : ""}`} onClick={() => setTab(t)}>
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+          <span className="tb-demo-banner">Demo catalogue — awaiting client-confirmed stock, prices and specifications.</span>
+          <div className="tb-lineup__count">{lineup.length} product{lineup.length === 1 ? "" : "s"}</div>
+          <div className="tb-lineup__grid">
+            {lineup.map((p) => (
+              <ProductCard key={p.id} product={p} onAdd={() => addToCart(p)} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="tb-why" id="why-techbox">
+        <div className="tb-container">
+          <ScrollReveal>
+            <SectionHeading
+              eyebrow="Why Techbox"
+              title="Good tech. No guesswork."
+              description="An honest local store, focused on clarity instead of upselling."
+            />
+          </ScrollReveal>
+          <div className="tb-why__grid">
+            {whyFeatures.map((f, i) => (
+              <ScrollReveal key={f.title} delay={i * 0.08}>
+                <div className="tb-why__card">
+                  <div className="tb-why__icon"><f.icon size={18} aria-hidden="true" /></div>
+                  <div className="tb-why__title">{f.title}</div>
+                  <p className="tb-why__desc">{f.desc}</p>
+                </div>
+              </ScrollReveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="tb-store">
+        <div className="tb-container tb-store__inner">
+          <ScrollReveal>
+            <span className="tb-eyebrow tb-eyebrow--gold">Visit the store</span>
+            <h2 className="tb-store__title">Your next phone could be right here.</h2>
+            <p className="tb-store__address">
+              Shops G72/G77, Starcity Mall,<br />
+              Saddar, Abdullah Haroon Road,<br />
+              Karachi, Pakistan
+            </p>
+            <p className="tb-store__note">Please confirm stock and opening hours before travelling.</p>
+            <div className="tb-store__ctas">
+              <Button to="/contact" variant="primary">Store details</Button>
+              <Button to="/contact" variant="ghost">Directions</Button>
+            </div>
+          </ScrollReveal>
+          <ScrollReveal delay={0.15}>
+            <div className="tb-store__visual" role="img" aria-label="Store location illustration">
+              Star City Mall · Saddar
+            </div>
+          </ScrollReveal>
+        </div>
+      </section>
+    </>
+  );
+}
+
+=== FILE: src/components/product/ProductCard.jsx ===
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import { Plus } from "lucide-react";
+import { formatPKR } from "../../data/demoProducts";
+
+export default function ProductCard({ product, onAdd }) {
+  return (
+    <motion.article
+      className="tb-product-card"
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-60px" }}
+      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <Link to={`/product/${product.slug}`} className="tb-product-card__media">
+        <img src={product.image} alt={product.name} loading="lazy" />
+        {product.badge && <span className="tb-product-card__badge">{product.badge}</span>}
+      </Link>
+      <div className="tb-product-card__body">
+        <div className="tb-product-card__meta">
+          <span>{product.brand}</span>
+          <span aria-hidden="true">·</span>
+          <span>{product.storage}</span>
+        </div>
+        <Link to={`/product/${product.slug}`} className="tb-product-card__title">{product.name}</Link>
+        <div className="tb-product-card__footer">
+          <span className="tb-product-card__price">{formatPKR(product.price)}</span>
+          <button
+            type="button"
+            className="tb-product-card__add"
+            aria-label={`Add ${product.name} to cart`}
+            onClick={() => onAdd?.(product)}
+            disabled={!product.inStock}
+          >
+            <Plus size={16} aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+    </motion.article>
+  );
+}
+
+=== FILE: src/styles/global.css ===
+/* Append these styles to the bottom of your existing global.css */
+
+.tb-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--color-midnight);
+  color: var(--color-white);
+  padding: 16px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: var(--shadow-elevated);
+  z-index: 9999;
+  border: 1px solid var(--border-gold);
+  max-width: 380px;
+}
+.tb-toast__icon {
+  background: var(--color-gold);
+  color: var(--color-midnight);
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.tb-toast__content { flex: 1; }
+.tb-toast__message { font-size: var(--fs-sm); margin-bottom: 4px; }
+.tb-toast__link { font-size: var(--fs-xs); color: var(--color-gold); text-decoration: underline; }
+.tb-toast__close { color: var(--color-muted); padding: 4px; }
+.tb-toast__close:hover { color: var(--color-white); }

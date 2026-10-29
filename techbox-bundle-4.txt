@@ -1,0 +1,232 @@
+=== FILE: src/pages/InfoLayout.jsx ===
+import { Link } from "react-router-dom";
+import { AlertCircle } from "lucide-react";
+
+export default function InfoLayout({ title, children }) {
+  return (
+    <div className="tb-container" style={{ paddingTop: "var(--space-8)", paddingBottom: "var(--space-9)", maxWidth: "800px" }}>
+      <div style={{ background: "#FFF3CD", border: "1px solid #FFE69C", padding: "12px 16px", borderRadius: "var(--radius-md)", display: "flex", alignItems: "center", gap: "12px", marginBottom: "var(--space-6)", color: "#856404" }}>
+        <AlertCircle size={20} />
+        <span style={{ fontSize: "var(--fs-sm)", fontWeight: 500 }}>DRAFT — This content requires client approval before launch.</span>
+      </div>
+      <h1 className="tb-section-heading__title" style={{ marginBottom: "var(--space-5)" }}>{title}</h1>
+      <div className="tb-prose">
+        {children}
+      </div>
+      <div style={{ marginTop: "var(--space-8)", paddingTop: "var(--space-5)", borderTop: "1px solid var(--border-light)" }}>
+        <Link to="/shop" className="tb-btn tb-btn--outline">Back to Shop</Link>
+      </div>
+    </div>
+  );
+}
+
+=== FILE: src/pages/DeliveryPage.jsx ===
+import InfoLayout from "./InfoLayout.jsx";
+
+export default function DeliveryPage() {
+  return (
+    <InfoLayout title="Delivery Information">
+      <h3>Local Delivery (Karachi)</h3>
+      <p>We offer local city delivery handled directly by Techbox. Please confirm the exact delivery fee and timing with our team at the time of order confirmation.</p>
+      
+      <h3>Out of City Shipping</h3>
+      <p>For customers outside Karachi, shipping is planned through Leopards Courier. Exact charges and delivery timelines will be provided upon order confirmation.</p>
+
+      <h3>Payment Verification</h3>
+      <p>Please note that for Bank Transfer and Easypaisa, orders are only dispatched after manual payment verification by our team.</p>
+    </InfoLayout>
+  );
+}
+
+=== FILE: src/pages/ReturnsPage.jsx ===
+import InfoLayout from "./InfoLayout.jsx";
+
+export default function ReturnsPage() {
+  return (
+    <InfoLayout title="Returns Policy">
+      <p>Our return policy is currently being finalized. We want to ensure a fair and transparent process for all our customers.</p>
+      <h3>General Guidelines (Pending Approval)</h3>
+      <ul>
+        <li>Returns must be initiated within a specific window (e.g., 48 hours of delivery).</li>
+        <li>The device must be in its original condition with all packaging intact.</li>
+        <li>Proof of purchase (receipt or order number) is required.</li>
+      </ul>
+      <p>Please contact the store directly for any immediate concerns.</p>
+    </InfoLayout>
+  );
+}
+
+=== FILE: src/pages/WarrantyPage.jsx ===
+import InfoLayout from "./InfoLayout.jsx";
+
+export default function WarrantyPage() {
+  return (
+    <InfoLayout title="Warranty Information">
+      <p>Warranty terms depend on the specific condition of the phone (Box Packed vs. Used).</p>
+      <h3>Box Packed Devices</h3>
+      <p>These devices carry the official manufacturer warranty. Please refer to the manufacturer's official terms.</p>
+      <h3>Used Devices</h3>
+      <p>Specific warranty periods for used devices will be stated clearly on the product page or invoice at the time of purchase.</p>
+    </InfoLayout>
+  );
+}
+
+=== FILE: src/pages/PrivacyPage.jsx ===
+import InfoLayout from "./InfoLayout.jsx";
+
+export default function PrivacyPage() {
+  return (
+    <InfoLayout title="Privacy Policy">
+      <p>At Techbox, we respect your privacy. This policy outlines how we handle your data.</p>
+      <h3>Information We Collect</h3>
+      <p>When you place an order, we collect your name, phone number, delivery address, and optional email address to fulfill your order.</p>
+      <h3>How We Use Your Data</h3>
+      <p>Your information is used strictly for order processing, delivery, and customer support. We do not sell your data to third parties.</p>
+      <h3>Payment Details</h3>
+      <p>We do not store credit card numbers or sensitive banking credentials on our servers. Manual payment verifications are handled securely by our team.</p>
+    </InfoLayout>
+  );
+}
+
+=== FILE: src/pages/ContactPage.jsx ===
+import { MapPin, Clock, Phone, MessageCircle } from "lucide-react";
+
+export default function ContactPage() {
+  return (
+    <div className="tb-container" style={{ paddingTop: "var(--space-8)", paddingBottom: "var(--space-9)", maxWidth: "800px" }}>
+      <h1 className="tb-section-heading__title" style={{ marginBottom: "var(--space-4)" }}>Contact Techbox</h1>
+      <p style={{ color: "var(--color-muted)", marginBottom: "var(--space-6)", fontSize: "var(--fs-lg)" }}>We are here to help you find the right phone and answer any questions.</p>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-5)" }}>
+        <div className="tb-admin-card" style={{ padding: "var(--space-5)" }}>
+          <MapPin size={24} style={{ color: "var(--color-gold)", marginBottom: "var(--space-3)" }} />
+          <h3 style={{ marginBottom: "var(--space-2)" }}>Visit Our Store</h3>
+          <p style={{ color: "var(--color-muted)", fontSize: "var(--fs-sm)", lineHeight: 1.6 }}>
+            Shops G72/G77, Starcity Mall,<br />
+            Saddar, Abdullah Haroon Road,<br />
+            Karachi, Pakistan
+          </p>
+        </div>
+
+        <div className="tb-admin-card" style={{ padding: "var(--space-5)" }}>
+          <MessageCircle size={24} style={{ color: "var(--color-gold)", marginBottom: "var(--space-3)" }} />
+          <h3 style={{ marginBottom: "var(--space-2)" }}>WhatsApp & Support</h3>
+          <p style={{ color: "var(--color-muted)", fontSize: "var(--fs-sm)", lineHeight: 1.6, marginBottom: "var(--space-3)" }}>
+            For immediate assistance, reach out to us on WhatsApp.
+          </p>
+          <div style={{ display: "inline-block", background: "#FFF3CD", border: "1px solid #FFE69C", padding: "4px 8px", borderRadius: "4px", fontSize: "var(--fs-xs)", color: "#856404" }}>
+            WhatsApp number pending client approval
+          </div>
+        </div>
+      </div>
+
+      <div className="tb-admin-card" style={{ padding: "var(--space-5)", marginTop: "var(--space-5)", display: "flex", alignItems: "center", gap: "var(--space-4)" }}>
+        <Clock size={24} style={{ color: "var(--color-gold)" }} />
+        <div>
+          <h3 style={{ marginBottom: "var(--space-1)" }}>Opening Hours</h3>
+          <p style={{ color: "var(--color-muted)", fontSize: "var(--fs-sm)" }}>Please confirm current opening hours before travelling to the store.</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+=== FILE: src/App.jsx ===
+import { Routes, Route, Navigate } from "react-router-dom";
+import { CartProvider, useCart } from "./context/CartContext";
+import Navbar from "./components/layout/Navbar.jsx";
+import Footer from "./components/layout/Footer.jsx";
+import HomePage from "./pages/HomePage.jsx";
+import ShopPage from "./pages/ShopPage.jsx";
+import ProductPage from "./pages/ProductPage.jsx";
+import CartPage from "./pages/CartPage.jsx";
+import CheckoutPage from "./pages/CheckoutPage.jsx";
+import OrderConfirmationPage from "./pages/OrderConfirmationPage.jsx";
+import ContactPage from "./pages/ContactPage.jsx";
+import NotFoundPage from "./pages/NotFoundPage.jsx";
+import CartToast from "./components/cart/CartToast.jsx";
+import DeliveryPage from "./pages/DeliveryPage.jsx";
+import ReturnsPage from "./pages/ReturnsPage.jsx";
+import WarrantyPage from "./pages/WarrantyPage.jsx";
+import PrivacyPage from "./pages/PrivacyPage.jsx";
+
+// Admin Imports
+import AdminLayout from "./admin/layout/AdminLayout.jsx";
+import AdminLoginPage from "./admin/pages/AdminLoginPage.jsx";
+import DashboardPage from "./admin/pages/DashboardPage.jsx";
+import AdminProductsPage from "./admin/pages/AdminProductsPage.jsx";
+import AdminProductFormPage from "./admin/pages/AdminProductFormPage.jsx";
+import AdminInventoryPage from "./admin/pages/AdminInventoryPage.jsx";
+import AdminPlaceholderPage from "./admin/pages/AdminPlaceholderPage.jsx";
+
+function RequireAdminAuth({ children }) {
+  const isAuthenticated = localStorage.getItem("techbox_admin") === "true";
+  return isAuthenticated ? children : <Navigate to="/admin/login" replace />;
+}
+
+export default function App() {
+  return (
+    <CartProvider>
+      <Routes>
+        {/* Storefront Routes */}
+        <Route path="/" element={<StorefrontWrapper />} />
+        <Route path="/shop" element={<StorefrontWrapper />} />
+        <Route path="/product/:slug" element={<StorefrontWrapper />} />
+        <Route path="/cart" element={<StorefrontWrapper />} />
+        <Route path="/checkout" element={<StorefrontWrapper />} />
+        <Route path="/order-confirmation/:orderNumber" element={<StorefrontWrapper />} />
+        <Route path="/contact" element={<StorefrontWrapper />} />
+        <Route path="/delivery" element={<StorefrontWrapper />} />
+        <Route path="/returns" element={<StorefrontWrapper />} />
+        <Route path="/warranty" element={<StorefrontWrapper />} />
+        <Route path="/privacy" element={<StorefrontWrapper />} />
+        <Route path="*" element={<StorefrontWrapper />} />
+
+        {/* Admin Routes */}
+        <Route path="/admin/login" element={<AdminLoginPage />} />
+        <Route path="/admin" element={<RequireAdminAuth><AdminLayout /></RequireAdminAuth>}>
+          <Route index element={<DashboardPage />} />
+          <Route path="products" element={<AdminProductsPage />} />
+          <Route path="products/new" element={<AdminProductFormPage />} />
+          <Route path="inventory" element={<AdminInventoryPage />} />
+          <Route path="orders" element={<AdminPlaceholderPage title="Orders Management" />} />
+          <Route path="customers" element={<AdminPlaceholderPage title="Customer Database" />} />
+          <Route path="settings" element={<AdminPlaceholderPage title="Store Settings" />} />
+        </Route>
+      </Routes>
+    </CartProvider>
+  );
+}
+
+function StorefrontWrapper() {
+  const { toast } = useCart();
+  return (
+    <>
+      <Navbar />
+      <main>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/shop" element={<ShopPage />} />
+          <Route path="/product/:slug" element={<ProductPage />} />
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/order-confirmation/:orderNumber" element={<OrderConfirmationPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/delivery" element={<DeliveryPage />} />
+          <Route path="/returns" element={<ReturnsPage />} />
+          <Route path="/warranty" element={<WarrantyPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </main>
+      <Footer />
+      <CartToast toast={toast} onClose={() => {}} />
+    </>
+  );
+}
+
+=== FILE: src/styles/global.css ===
+/* Paste this at the very bottom of your global.css */
+.tb-prose h3 { font-size: var(--fs-lg); font-weight: 600; color: var(--color-charcoal); margin-top: var(--space-5); margin-bottom: var(--space-2); }
+.tb-prose p, .tb-prose li { font-size: var(--fs-base); color: var(--color-muted); line-height: 1.7; margin-bottom: var(--space-3); }
+.tb-prose ul { padding-left: var(--space-5); margin-bottom: var(--space-4); }   

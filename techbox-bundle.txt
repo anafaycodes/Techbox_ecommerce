@@ -1,0 +1,1290 @@
+=== FILE: scaffold.js (project root) ===
+// Reads techbox-bundle.txt, creates every === FILE: path === entry.
+// Usage: node scaffold.js techbox-bundle.txt
+const fs = require("fs");
+const path = require("path");
+
+const bundlePath = process.argv[2];
+if (!bundlePath) {
+  console.error("Usage: node scaffold.js <bundle-file>");
+  process.exit(1);
+}
+
+const text = fs.readFileSync(bundlePath, "utf8");
+const lines = text.split(/\r?\n/);
+const fileMarker = /^=== FILE: (.+?) ===$/;
+
+let current = null;
+let buffer = [];
+let count = 0;
+
+function flush() {
+  if (!current) return;
+  const full = buffer.join("\n").replace(/^\n+|\n+$/g, "");
+  const dir = path.dirname(current);
+  if (dir && dir !== ".") fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(current, full + "\n", "utf8");
+  console.log("wrote", current);
+  count++;
+  current = null;
+  buffer = [];
+}
+
+for (const line of lines) {
+  const m = line.match(fileMarker);
+  if (m) {
+    flush();
+    current = m[1];
+  } else if (current) {
+    buffer.push(line);
+  }
+}
+flush();
+console.log(`\nDone. ${count} files written.`);
+
+=== FILE: src/main.jsx ===
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
+import App from "./App.jsx";
+import "./styles/global.css";
+
+ReactDOM.createRoot(document.getElementById("root")).render(
+  <React.StrictMode>
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
+  </React.StrictMode>
+);
+
+=== FILE: src/App.jsx ===
+import { Routes, Route } from "react-router-dom";
+import Navbar from "./components/layout/Navbar.jsx";
+import Footer from "./components/layout/Footer.jsx";
+import HomePage from "./pages/HomePage.jsx";
+import ShopPage from "./pages/ShopPage.jsx";
+import ProductPage from "./pages/ProductPage.jsx";
+import CartPage from "./pages/CartPage.jsx";
+import CheckoutPage from "./pages/CheckoutPage.jsx";
+import OrderConfirmationPage from "./pages/OrderConfirmationPage.jsx";
+import ContactPage from "./pages/ContactPage.jsx";
+import NotFoundPage from "./pages/NotFoundPage.jsx";
+
+export default function App() {
+  return (
+    <>
+      <Navbar cartCount={0} />
+      <main>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/shop" element={<ShopPage />} />
+          <Route path="/product/:slug" element={<ProductPage />} />
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/order-confirmation/:orderNumber" element={<OrderConfirmationPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </main>
+      <Footer />
+    </>
+  );
+}
+
+=== FILE: src/styles/tokens.css ===
+:root {
+  --color-midnight: #07151c;
+  --color-navy: #0a1b23;
+  --color-ivory: #f6f6f2;
+  --color-gold: #d8b16a;
+  --color-gold-hover: #c99f52;
+  --color-charcoal: #172128;
+  --color-muted: #8a969b;
+  --color-white: #ffffff;
+  --color-near-white: #fbfbf8;
+  --border-dark: rgba(255, 255, 255, 0.08);
+  --border-light: rgba(23, 33, 40, 0.1);
+  --border-gold: rgba(216, 177, 106, 0.4);
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+  --radius-pill: 999px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+  --font-sans: "Inter", "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.875rem;
+  --fs-base: 1rem;
+  --fs-lg: 1.125rem;
+  --fs-xl: 1.375rem;
+  --fs-2xl: 1.875rem;
+  --fs-3xl: 2.5rem;
+  --fs-4xl: 3.5rem;
+  --fs-hero: clamp(2.5rem, 6vw, 4.5rem);
+  --content-max: 1280px;
+  --content-pad: clamp(20px, 4vw, 48px);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 180ms;
+  --dur-med: 380ms;
+  --dur-slow: 620ms;
+  --shadow-soft: 0 1px 2px rgba(7, 21, 28, 0.04), 0 8px 24px rgba(7, 21, 28, 0.06);
+  --shadow-elevated: 0 4px 12px rgba(7, 21, 28, 0.08), 0 20px 48px rgba(7, 21, 28, 0.12);
+}
+
+=== FILE: src/styles/animations.css ===
+@keyframes tb-fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes tb-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+.tb-badge-pop { animation: tb-pop 320ms var(--ease-out); }
+.tb-fade-up { animation: tb-fade-up 520ms var(--ease-out) both; }
+
+=== FILE: src/styles/global.css ===
+@import "./tokens.css";
+@import "./animations.css";
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-base);
+  line-height: 1.55;
+  color: var(--color-charcoal);
+  background: var(--color-ivory);
+  overflow-x: hidden;
+}
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+img { max-width: 100%; display: block; }
+
+:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+h1, h2, h3, h4, h5, h6, p { margin: 0; }
+
+.tb-container {
+  width: 100%;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding-left: var(--content-pad);
+  padding-right: var(--content-pad);
+}
+
+.tb-eyebrow {
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  display: inline-block;
+}
+.tb-eyebrow--gold { color: var(--color-gold); }
+
+.tb-sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.tb-gold { color: var(--color-gold); }
+
+.tb-section-heading { margin-bottom: var(--space-6); max-width: 640px; }
+.tb-section-heading--center { margin-left: auto; margin-right: auto; text-align: center; }
+.tb-section-heading__title {
+  font-size: clamp(1.75rem, 3.2vw, 2.5rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin-top: var(--space-2);
+  color: var(--color-charcoal);
+}
+.is-dark .tb-section-heading__title { color: var(--color-white); }
+.tb-section-heading__desc {
+  margin-top: var(--space-3);
+  font-size: var(--fs-lg);
+  color: var(--color-muted);
+  max-width: 56ch;
+}
+
+.tb-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font-weight: 500;
+  border-radius: var(--radius-pill);
+  transition: transform var(--dur-fast) var(--ease-out),
+              background-color var(--dur-fast) var(--ease-out),
+              color var(--dur-fast) var(--ease-out),
+              border-color var(--dur-fast) var(--ease-out);
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+.tb-btn:active { transform: translateY(1px); }
+.tb-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.tb-btn--sm { padding: 8px 16px; font-size: var(--fs-sm); }
+.tb-btn--md { padding: 12px 24px; font-size: var(--fs-base); }
+.tb-btn--lg { padding: 16px 32px; font-size: var(--fs-lg); }
+.tb-btn--full { width: 100%; }
+.tb-btn--primary { background: var(--color-gold); color: var(--color-midnight); }
+.tb-btn--primary:hover { background: var(--color-gold-hover); }
+.tb-btn--ghost { background: transparent; color: var(--color-white); border-color: rgba(255,255,255,0.3); }
+.tb-btn--ghost:hover { border-color: var(--color-gold); color: var(--color-gold); }
+.tb-btn--outline { background: transparent; color: var(--color-charcoal); border-color: var(--color-charcoal); }
+.tb-btn--outline:hover { background: var(--color-charcoal); color: var(--color-white); }
+
+.tb-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: transparent;
+  transition: background-color var(--dur-med) var(--ease-out),
+              border-color var(--dur-med) var(--ease-out);
+  border-bottom: 1px solid transparent;
+}
+.tb-navbar.is-scrolled {
+  background: rgba(7, 21, 28, 0.92);
+  backdrop-filter: blur(12px);
+  border-bottom-color: var(--border-dark);
+}
+.tb-navbar__inner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding-top: var(--space-4);
+  padding-bottom: var(--space-4);
+}
+.tb-navbar__brand {
+  font-weight: 700;
+  font-size: 1.15rem;
+  letter-spacing: 0.08em;
+  color: var(--color-white);
+}
+.tb-navbar__links {
+  display: flex;
+  gap: var(--space-5);
+  margin-left: var(--space-5);
+  flex: 1;
+}
+.tb-navbar__link {
+  font-size: var(--fs-sm);
+  color: rgba(255, 255, 255, 0.75);
+  transition: color var(--dur-fast);
+}
+.tb-navbar__link:hover { color: var(--color-white); }
+.tb-navbar__link.active { color: var(--color-gold); }
+.tb-navbar__actions { display: flex; align-items: center; gap: var(--space-3); }
+.tb-navbar__search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 8px 12px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-dark);
+  color: var(--color-muted);
+}
+.tb-navbar__search input {
+  background: transparent;
+  border: none;
+  color: var(--color-white);
+  font-size: var(--fs-sm);
+  outline: none;
+  width: 140px;
+}
+.tb-navbar__cart {
+  position: relative;
+  color: var(--color-white);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+}
+.tb-navbar__cart-badge {
+  position: absolute;
+  top: 0; right: 0;
+  background: var(--color-gold);
+  color: var(--color-midnight);
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 999px;
+  min-width: 18px; height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+}
+.tb-navbar__mobile-toggle { display: none; color: var(--color-white); }
+.tb-navbar__mobile { display: none; }
+@media (max-width: 900px) {
+  .tb-navbar__links, .tb-navbar__search { display: none; }
+  .tb-navbar__mobile-toggle { display: inline-flex; }
+  .tb-navbar__mobile {
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-4) var(--content-pad);
+    background: var(--color-midnight);
+    border-top: 1px solid var(--border-dark);
+    gap: var(--space-3);
+  }
+  .tb-navbar__mobile-link {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: var(--fs-lg);
+    padding: var(--space-2) 0;
+  }
+}
+
+.tb-hero {
+  background: radial-gradient(circle at 70% 40%, rgba(216, 177, 106, 0.15), transparent 55%),
+              linear-gradient(180deg, var(--color-midnight) 0%, var(--color-navy) 100%);
+  color: var(--color-white);
+  padding: var(--space-9) 0;
+  margin-top: -68px;
+  padding-top: calc(var(--space-9) + 68px);
+}
+.tb-hero__inner {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: var(--space-8);
+  align-items: center;
+}
+.tb-hero__title {
+  font-size: var(--fs-hero);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  margin: var(--space-4) 0 var(--space-5);
+}
+.tb-hero__subtitle {
+  font-size: var(--fs-lg);
+  color: rgba(255, 255, 255, 0.7);
+  max-width: 46ch;
+  margin-bottom: var(--space-6);
+}
+.tb-hero__ctas { display: flex; gap: var(--space-3); flex-wrap: wrap; margin-bottom: var(--space-6); }
+.tb-hero__trust {
+  display: flex;
+  gap: var(--space-5);
+  font-size: var(--fs-sm);
+  color: rgba(255, 255, 255, 0.6);
+}
+.tb-hero__trust span { display: inline-flex; align-items: center; gap: var(--space-2); }
+.tb-hero__visual {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 40%, rgba(216, 177, 106, 0.25), transparent 60%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tb-hero__visual img {
+  width: 85%;
+  height: 85%;
+  object-fit: contain;
+  filter: drop-shadow(0 40px 60px rgba(0, 0, 0, 0.5));
+}
+.tb-hero__visual-meta {
+  position: absolute;
+  left: var(--space-5); right: var(--space-5); bottom: var(--space-5);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4);
+  background: rgba(7, 21, 28, 0.7);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border-dark);
+  border-radius: var(--radius-md);
+}
+.tb-hero__visual-meta small {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-gold);
+  margin-bottom: 4px;
+}
+.tb-hero__visual-meta strong { font-size: var(--fs-lg); font-weight: 500; }
+.tb-hero__visual-meta .price { color: var(--color-gold); font-weight: 600; }
+
+.tb-brand-strip {
+  background: var(--color-midnight);
+  border-top: 1px solid var(--border-dark);
+  border-bottom: 1px solid var(--border-dark);
+  padding: var(--space-5) 0;
+}
+.tb-brand-strip__inner {
+  display: flex;
+  gap: var(--space-7);
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.tb-brand-strip__link {
+  font-size: var(--fs-lg);
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.55);
+  transition: color var(--dur-fast);
+}
+.tb-brand-strip__link:hover { color: var(--color-gold); }
+
+.tb-lineup { padding: var(--space-9) 0; background: var(--color-ivory); }
+.tb-lineup__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: var(--space-5);
+  margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+}
+.tb-lineup__controls { display: flex; gap: var(--space-2); }
+.tb-lineup__tab {
+  padding: 8px 18px;
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-sm);
+  border: 1px solid var(--border-light);
+  color: var(--color-charcoal);
+  background: var(--color-white);
+}
+.tb-lineup__tab.is-active {
+  background: var(--color-midnight);
+  color: var(--color-white);
+  border-color: var(--color-midnight);
+}
+.tb-lineup__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-5);
+}
+.tb-lineup__count {
+  font-size: var(--fs-sm);
+  color: var(--color-muted);
+  margin-bottom: var(--space-4);
+}
+.tb-demo-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-xs);
+  color: var(--color-muted);
+  background: rgba(216, 177, 106, 0.12);
+  border: 1px solid var(--border-gold);
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  margin-bottom: var(--space-4);
+}
+
+.tb-why { padding: var(--space-9) 0; background: var(--color-near-white); }
+.tb-why__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-5);
+  margin-top: var(--space-7);
+}
+.tb-why__card {
+  padding: var(--space-5);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  background: var(--color-white);
+}
+.tb-why__icon {
+  width: 40px; height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(216, 177, 106, 0.15);
+  color: var(--color-gold);
+  margin-bottom: var(--space-3);
+}
+.tb-why__title { font-size: var(--fs-lg); font-weight: 500; margin-bottom: var(--space-2); }
+.tb-why__desc { color: var(--color-muted); font-size: var(--fs-sm); }
+
+.tb-store { padding: var(--space-9) 0; background: var(--color-midnight); color: var(--color-white); }
+.tb-store__inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-7);
+  align-items: center;
+}
+.tb-store__title {
+  font-size: clamp(1.75rem, 3.2vw, 2.5rem);
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin: var(--space-3) 0 var(--space-4);
+}
+.tb-store__address { color: rgba(255, 255, 255, 0.75); margin-bottom: var(--space-4); line-height: 1.7; }
+.tb-store__note { font-size: var(--fs-sm); color: var(--color-gold); margin-bottom: var(--space-5); }
+.tb-store__ctas { display: flex; gap: var(--space-3); flex-wrap: wrap; }
+.tb-store__visual {
+  aspect-ratio: 1 / 1;
+  border-radius: var(--radius-lg);
+  background: radial-gradient(circle at 30% 30%, rgba(216, 177, 106, 0.35), transparent 55%),
+              linear-gradient(135deg, #0f242e 0%, #07151c 100%);
+  border: 1px solid var(--border-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: var(--fs-sm);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  text-align: center;
+  padding: var(--space-5);
+}
+
+.tb-footer {
+  background: var(--color-charcoal);
+  color: rgba(255, 255, 255, 0.7);
+  padding: var(--space-8) 0 var(--space-5);
+}
+.tb-footer__grid {
+  display: grid;
+  grid-template-columns: 1.5fr repeat(3, 1fr);
+  gap: var(--space-6);
+  margin-bottom: var(--space-7);
+}
+.tb-footer__brand {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--color-white);
+  margin-bottom: var(--space-3);
+}
+.tb-footer__tagline { font-size: var(--fs-sm); max-width: 28ch; }
+.tb-footer__heading {
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--color-gold);
+  margin-bottom: var(--space-3);
+  font-weight: 500;
+}
+.tb-footer__links { display: flex; flex-direction: column; gap: var(--space-2); }
+.tb-footer__links a { font-size: var(--fs-sm); transition: color var(--dur-fast); }
+.tb-footer__links a:hover { color: var(--color-white); }
+.tb-footer__bottom {
+  border-top: 1px solid var(--border-dark);
+  padding-top: var(--space-4);
+  font-size: var(--fs-xs);
+  text-align: center;
+}
+
+.tb-product-card {
+  background: var(--color-white);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border-light);
+  transition: box-shadow var(--dur-med) var(--ease-out),
+              transform var(--dur-med) var(--ease-out);
+}
+.tb-product-card:hover { box-shadow: var(--shadow-soft); transform: translateY(-2px); }
+.tb-product-card__media {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 5;
+  background: #f0f0eb;
+  overflow: hidden;
+}
+.tb-product-card__media img {
+  width: 100%; height: 100%; object-fit: cover;
+  transition: transform var(--dur-slow) var(--ease-out);
+}
+.tb-product-card:hover .tb-product-card__media img { transform: scale(1.04); }
+.tb-product-card__badge {
+  position: absolute;
+  top: var(--space-3); left: var(--space-3);
+  background: var(--color-midnight);
+  color: var(--color-gold);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: var(--radius-pill);
+}
+.tb-product-card__body { padding: var(--space-4); }
+.tb-product-card__meta {
+  display: flex;
+  gap: var(--space-2);
+  font-size: var(--fs-xs);
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.tb-product-card__title {
+  display: block;
+  margin-top: var(--space-2);
+  font-weight: 500;
+  font-size: var(--fs-lg);
+  color: var(--color-charcoal);
+}
+.tb-product-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--space-3);
+}
+.tb-product-card__price { font-weight: 600; color: var(--color-charcoal); }
+.tb-product-card__add {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: var(--color-midnight);
+  color: var(--color-white);
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: background var(--dur-fast);
+}
+.tb-product-card__add:hover { background: var(--color-gold); color: var(--color-midnight); }
+.tb-product-card__add:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.tb-placeholder {
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  text-align: center;
+  padding: var(--space-8) var(--content-pad);
+}
+.tb-placeholder h1 { font-size: var(--fs-2xl); font-weight: 500; }
+.tb-placeholder p { color: var(--color-muted); max-width: 46ch; }
+
+@media (max-width: 900px) {
+  .tb-hero__inner,
+  .tb-store__inner { grid-template-columns: 1fr; }
+  .tb-hero__visual { max-width: 480px; margin: 0 auto; }
+  .tb-footer__grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 520px) {
+  .tb-footer__grid { grid-template-columns: 1fr; }
+  .tb-lineup__grid { grid-template-columns: repeat(2, 1fr); gap: var(--space-3); }
+}
+
+=== FILE: src/data/demoProducts.js ===
+// DEMO CATALOGUE — illustrative values only. Every entry carries isDemo: true.
+// Replace with GET /api/products responses in production (see services/apiClient.js).
+export const demoProducts = [
+  {
+    id: "p_iphone16promax_256_ti",
+    slug: "iphone-16-pro-max-256gb-titanium",
+    name: "iPhone 16 Pro Max",
+    brand: "Apple",
+    category: "iPhone",
+    condition: "Box packed",
+    price: 299999,
+    compareAtPrice: null,
+    storage: "256GB",
+    colors: ["Titanium"],
+    image: "https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&w=900&q=80",
+    gallery: ["https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&w=1200&q=80"],
+    featured: true,
+    badge: "New",
+    inStock: true,
+    sku: "TB-IP16PM-256-TI",
+    isDemo: true,
+    description: "Aerospace-grade titanium, a larger display, and Apple's most advanced camera system. Demo description.",
+    specs: { Display: "6.9-inch Super Retina XDR", Chip: "A18 Pro", Camera: "48MP Fusion" },
+  },
+  {
+    id: "p_iphone15_128_blk",
+    slug: "iphone-15-128gb-black",
+    name: "iPhone 15",
+    brand: "Apple",
+    category: "iPhone",
+    condition: "Box packed",
+    price: 189999,
+    compareAtPrice: null,
+    storage: "128GB",
+    colors: ["Black"],
+    image: "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?auto=format&fit=crop&w=900&q=80",
+    gallery: ["https://images.unsplash.com/photo-1592750475338-74b7b21085ab?auto=format&fit=crop&w=1200&q=80"],
+    featured: false,
+    badge: null,
+    inStock: true,
+    sku: "TB-IP15-128-BLK",
+    isDemo: true,
+    description: "Dynamic Island, USB-C, and a 48MP main camera. Demo description.",
+    specs: { Display: "6.1-inch Super Retina XDR", Chip: "A16 Bionic", Camera: "48MP Main" },
+  },
+  {
+    id: "p_s24ultra_256_ti",
+    slug: "samsung-galaxy-s24-ultra-256gb-titanium",
+    name: "Galaxy S24 Ultra",
+    brand: "Samsung",
+    category: "Android",
+    condition: "Box packed",
+    price: 289999,
+    compareAtPrice: null,
+    storage: "256GB",
+    colors: ["Titanium Gray"],
+    image: "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?auto=format&fit=crop&w=900&q=80",
+    gallery: ["https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?auto=format&fit=crop&w=1200&q=80"],
+    featured: true,
+    badge: "Featured",
+    inStock: true,
+    sku: "TB-S24U-256-TI",
+    isDemo: true,
+    description: "Titanium frame, built-in S Pen, Galaxy AI. Demo description.",
+    specs: { Display: "6.8-inch QHD+", Chip: "Snapdragon 8 Gen 3", Camera: "200MP Main" },
+  },
+  {
+    id: "p_pixel8_128_obs",
+    slug: "google-pixel-8-128gb-obsidian",
+    name: "Pixel 8",
+    brand: "Google",
+    category: "Android",
+    condition: "Box packed",
+    price: 149999,
+    compareAtPrice: null,
+    storage: "128GB",
+    colors: ["Obsidian"],
+    image: "https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=900&q=80",
+    gallery: ["https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=1200&q=80"],
+    featured: false,
+    badge: null,
+    inStock: true,
+    sku: "TB-PX8-128-OBS",
+    isDemo: true,
+    description: "Google's AI-first phone with 7 years of updates. Demo description.",
+    specs: { Display: "6.2-inch OLED", Chip: "Tensor G3", Camera: "50MP Main" },
+  },
+];
+
+export const brands = ["Apple", "Samsung", "Google", "OnePlus", "Xiaomi"];
+
+export const formatPKR = (amount) =>
+  new Intl.NumberFormat("en-PK", { style: "currency", currency: "PKR", maximumFractionDigits: 0 }).format(amount);
+
+=== FILE: src/services/apiClient.js ===
+// Centralized API client. Real HTTP integration wires up in Phase 2.
+// Phase 1 reads demoProducts directly (see data/demoProducts.js).
+const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
+export const USE_MOCKS = import.meta.env.VITE_USE_MOCKS !== "false";
+
+export async function apiGet(path) {
+  if (USE_MOCKS) throw new Error(`Mock mode: ${path} not implemented yet.`);
+  const res = await fetch(`${BASE_URL}${path}`, { credentials: "include" });
+  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+  return res.json();
+}
+
+export async function apiPost(path, body) {
+  if (USE_MOCKS) throw new Error(`Mock mode: ${path} not implemented yet.`);
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+  return res.json();
+}
+
+=== FILE: src/components/common/Button.jsx ===
+import { Link } from "react-router-dom";
+
+export default function Button({
+  children, to, href, onClick,
+  variant = "primary", size = "md", type = "button",
+  disabled = false, full = false, ...rest
+}) {
+  const cls = `tb-btn tb-btn--${variant} tb-btn--${size} ${full ? "tb-btn--full" : ""}`;
+  if (to) return <Link to={to} className={cls} {...rest}>{children}</Link>;
+  if (href) return <a href={href} className={cls} {...rest}>{children}</a>;
+  return (
+    <button type={type} onClick={onClick} className={cls} disabled={disabled} {...rest}>
+      {children}
+    </button>
+  );
+}
+
+=== FILE: src/components/common/SectionHeading.jsx ===
+export default function SectionHeading({ eyebrow, title, description, align = "left", dark = false }) {
+  return (
+    <div className={`tb-section-heading tb-section-heading--${align} ${dark ? "is-dark" : ""}`}>
+      {eyebrow && <span className={`tb-eyebrow ${dark ? "tb-eyebrow--gold" : ""}`}>{eyebrow}</span>}
+      <h2 className="tb-section-heading__title">{title}</h2>
+      {description && <p className="tb-section-heading__desc">{description}</p>}
+    </div>
+  );
+}
+
+=== FILE: src/components/common/ScrollReveal.jsx ===
+import { motion, useReducedMotion } from "framer-motion";
+
+export default function ScrollReveal({ children, delay = 0, y = 20, as = "div" }) {
+  const reduced = useReducedMotion();
+  const MotionTag = motion[as] || motion.div;
+  if (reduced) return <MotionTag>{children}</MotionTag>;
+  return (
+    <MotionTag
+      initial={{ opacity: 0, y }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-80px" }}
+      transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1], delay }}
+    >
+      {children}
+    </MotionTag>
+  );
+}
+
+=== FILE: src/components/layout/Navbar.jsx ===
+import { useState, useEffect } from "react";
+import { Link, NavLink } from "react-router-dom";
+import { Search, ShoppingBag, Menu, X } from "lucide-react";
+
+const navLinks = [
+  { to: "/shop", label: "Shop" },
+  { to: "/shop?category=iPhone", label: "iPhone" },
+  { to: "/shop?category=Android&brand=Samsung", label: "Samsung" },
+  { to: "/shop?category=Android", label: "Android" },
+  { to: "/#why-techbox", label: "Why Techbox" },
+];
+
+export default function Navbar({ cartCount = 0 }) {
+  const [scrolled, setScrolled] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 12);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  return (
+    <header className={`tb-navbar ${scrolled ? "is-scrolled" : ""}`}>
+      <div className="tb-container tb-navbar__inner">
+        <Link to="/" className="tb-navbar__brand" aria-label="Techbox home">TECHBOX</Link>
+
+        <nav className="tb-navbar__links" aria-label="Primary">
+          {navLinks.map((l) => (
+            <NavLink key={l.to} to={l.to} className="tb-navbar__link">{l.label}</NavLink>
+          ))}
+        </nav>
+
+        <div className="tb-navbar__actions">
+          <div className="tb-navbar__search" role="search">
+            <Search size={16} aria-hidden="true" />
+            <input
+              type="search"
+              placeholder="Search phones"
+              aria-label="Search phones"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && e.currentTarget.value.trim()) {
+                  window.location.href = `/shop?q=${encodeURIComponent(e.currentTarget.value.trim())}`;
+                }
+              }}
+            />
+          </div>
+          <Link to="/cart" className="tb-navbar__cart" aria-label={`Cart, ${cartCount} items`}>
+            <ShoppingBag size={20} aria-hidden="true" />
+            {cartCount > 0 && <span className="tb-navbar__cart-badge">{cartCount}</span>}
+          </Link>
+          <button
+            type="button"
+            className="tb-navbar__mobile-toggle"
+            aria-label={mobileOpen ? "Close menu" : "Open menu"}
+            aria-expanded={mobileOpen}
+            onClick={() => setMobileOpen((v) => !v)}
+          >
+            {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
+        </div>
+      </div>
+
+      {mobileOpen && (
+        <nav className="tb-navbar__mobile" aria-label="Mobile primary">
+          {navLinks.map((l) => (
+            <Link key={l.to} to={l.to} onClick={() => setMobileOpen(false)} className="tb-navbar__mobile-link">
+              {l.label}
+            </Link>
+          ))}
+        </nav>
+      )}
+    </header>
+  );
+}
+
+=== FILE: src/components/layout/Footer.jsx ===
+import { Link } from "react-router-dom";
+
+export default function Footer() {
+  return (
+    <footer className="tb-footer">
+      <div className="tb-container">
+        <div className="tb-footer__grid">
+          <div>
+            <div className="tb-footer__brand">TECHBOX</div>
+            <p className="tb-footer__tagline">
+              Premium smartphones. Genuine products. Straightforward service from Saddar, Karachi.
+            </p>
+          </div>
+          <div>
+            <div className="tb-footer__heading">Shop</div>
+            <div className="tb-footer__links">
+              <Link to="/shop">All phones</Link>
+              <Link to="/shop?category=iPhone">iPhone</Link>
+              <Link to="/shop?category=Android">Android</Link>
+            </div>
+          </div>
+          <div>
+            <div className="tb-footer__heading">Policies</div>
+            <div className="tb-footer__links">
+              <Link to="/delivery">Delivery</Link>
+              <Link to="/returns">Returns</Link>
+              <Link to="/warranty">Warranty</Link>
+              <Link to="/privacy">Privacy</Link>
+            </div>
+          </div>
+          <div>
+            <div className="tb-footer__heading">Store</div>
+            <div className="tb-footer__links">
+              <Link to="/contact">Contact</Link>
+              <span style={{ fontSize: "var(--fs-sm)" }}>Shops G72/G77, Starcity Mall, Saddar, Karachi</span>
+            </div>
+          </div>
+        </div>
+        <div className="tb-footer__bottom">
+          © {new Date().getFullYear()} Techbox. All rights reserved.
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+=== FILE: src/components/product/ProductCard.jsx ===
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import { Plus } from "lucide-react";
+import { formatPKR } from "../../data/demoProducts";
+
+export default function ProductCard({ product, onAdd }) {
+  return (
+    <motion.article
+      className="tb-product-card"
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-60px" }}
+      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <Link to={`/product/${product.slug}`} className="tb-product-card__media">
+        <img src={product.image} alt={product.name} loading="lazy" />
+        {product.badge && <span className="tb-product-card__badge">{product.badge}</span>}
+      </Link>
+      <div className="tb-product-card__body">
+        <div className="tb-product-card__meta">
+          <span>{product.brand}</span>
+          <span aria-hidden="true">·</span>
+          <span>{product.storage}</span>
+        </div>
+        <Link to={`/product/${product.slug}`} className="tb-product-card__title">{product.name}</Link>
+        <div className="tb-product-card__footer">
+          <span className="tb-product-card__price">{formatPKR(product.price)}</span>
+          <button
+            type="button"
+            className="tb-product-card__add"
+            aria-label={`Add ${product.name} to cart`}
+            onClick={() => onAdd?.(product)}
+            disabled={!product.inStock}
+          >
+            <Plus size={16} aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+    </motion.article>
+  );
+}
+
+=== FILE: src/pages/HomePage.jsx ===
+import { useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import { ShieldCheck, Truck, Headset, MapPin, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
+import { demoProducts, brands, formatPKR } from "../data/demoProducts";
+import ProductCard from "../components/product/ProductCard";
+import SectionHeading from "../components/common/SectionHeading";
+import ScrollReveal from "../components/common/ScrollReveal";
+import Button from "../components/common/Button";
+
+const featured = demoProducts.find((p) => p.featured) ?? demoProducts[0];
+
+const whyFeatures = [
+  { icon: ShieldCheck, title: "Genuine products", desc: "Sourced from trusted channels. Condition and specs stated clearly on every listing." },
+  { icon: Truck, title: "Delivery options", desc: "Local delivery in Karachi, with out-of-city shipping available. Confirm details before ordering." },
+  { icon: Headset, title: "Real support", desc: "Talk to an actual person at the store before, during, and after your purchase." },
+  { icon: MapPin, title: "Visit us in Saddar", desc: "See the phone in person at Star City Mall before you decide." },
+];
+
+export default function HomePage({ onAddToCart }) {
+  const reduced = useReducedMotion();
+  const [tab, setTab] = useState("All");
+  const lineup = tab === "All" ? demoProducts : demoProducts.filter((p) => p.category === tab);
+
+  return (
+    <>
+      <section className="tb-hero">
+        <div className="tb-container tb-hero__inner">
+          <div className="tb-hero__copy">
+            <span className="tb-eyebrow tb-eyebrow--gold">TECHBOX · SMARTPHONE STORE</span>
+            <motion.h1
+              className="tb-hero__title"
+              initial={reduced ? false : { opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            >
+              Find your next <span className="tb-gold">phone.</span>
+            </motion.h1>
+            <motion.p
+              className="tb-hero__subtitle"
+              initial={reduced ? false : { opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+            >
+              Premium smartphones. Genuine products. Straightforward service from Saddar, Karachi.
+            </motion.p>
+            <motion.div
+              className="tb-hero__ctas"
+              initial={reduced ? false : { opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
+              <Button to="/shop" variant="primary" size="lg">
+                Shop smartphones <ArrowRight size={16} />
+              </Button>
+              <Button to="/contact" variant="ghost" size="lg">Visit our store</Button>
+            </motion.div>
+            <div className="tb-hero__trust">
+              <span><ShieldCheck size={16} aria-hidden="true" /> Genuine products</span>
+              <span><Truck size={16} aria-hidden="true" /> Karachi delivery</span>
+            </div>
+          </div>
+
+          <motion.div
+            className="tb-hero__visual"
+            initial={reduced ? false : { opacity: 0, scale: 0.94 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <img src={featured.image} alt={featured.name} />
+            <div className="tb-hero__visual-meta">
+              <div>
+                <small>Designed for you</small>
+                <strong>{featured.name}</strong>
+              </div>
+              <span className="price">{formatPKR(featured.price)}</span>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      <section className="tb-brand-strip" aria-label="Shop by brand">
+        <div className="tb-container tb-brand-strip__inner">
+          {brands.map((b) => (
+            <Link key={b} to={`/shop?brand=${encodeURIComponent(b)}`} className="tb-brand-strip__link">{b}</Link>
+          ))}
+        </div>
+      </section>
+
+      <section className="tb-lineup" id="lineup">
+        <div className="tb-container">
+          <div className="tb-lineup__head">
+            <SectionHeading eyebrow="The lineup" title="Find your fit." description="A focused selection of iPhones and Androids." />
+            <div className="tb-lineup__controls">
+              {["All", "iPhone", "Android"].map((t) => (
+                <button key={t} type="button" className={`tb-lineup__tab ${tab === t ? "is-active" : ""}`} onClick={() => setTab(t)}>
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+          <span className="tb-demo-banner">Demo catalogue — awaiting client-confirmed stock, prices and specifications.</span>
+          <div className="tb-lineup__count">{lineup.length} product{lineup.length === 1 ? "" : "s"}</div>
+          <div className="tb-lineup__grid">
+            {lineup.map((p) => (
+              <ProductCard key={p.id} product={p} onAdd={onAddToCart} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="tb-why" id="why-techbox">
+        <div className="tb-container">
+          <ScrollReveal>
+            <SectionHeading
+              eyebrow="Why Techbox"
+              title="Good tech. No guesswork."
+              description="An honest local store, focused on clarity instead of upselling."
+            />
+          </ScrollReveal>
+          <div className="tb-why__grid">
+            {whyFeatures.map((f, i) => (
+              <ScrollReveal key={f.title} delay={i * 0.08}>
+                <div className="tb-why__card">
+                  <div className="tb-why__icon"><f.icon size={18} aria-hidden="true" /></div>
+                  <div className="tb-why__title">{f.title}</div>
+                  <p className="tb-why__desc">{f.desc}</p>
+                </div>
+              </ScrollReveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="tb-store">
+        <div className="tb-container tb-store__inner">
+          <ScrollReveal>
+            <span className="tb-eyebrow tb-eyebrow--gold">Visit the store</span>
+            <h2 className="tb-store__title">Your next phone could be right here.</h2>
+            <p className="tb-store__address">
+              Shops G72/G77, Starcity Mall,<br />
+              Saddar, Abdullah Haroon Road,<br />
+              Karachi, Pakistan
+            </p>
+            <p className="tb-store__note">Please confirm stock and opening hours before travelling.</p>
+            <div className="tb-store__ctas">
+              <Button to="/contact" variant="primary">Store details</Button>
+              <Button to="/contact" variant="ghost">Directions</Button>
+            </div>
+          </ScrollReveal>
+          <ScrollReveal delay={0.15}>
+            <div className="tb-store__visual" role="img" aria-label="Store location illustration">
+              Star City Mall · Saddar
+            </div>
+          </ScrollReveal>
+        </div>
+      </section>
+    </>
+  );
+}
+
+=== FILE: src/pages/ShopPage.jsx ===
+import Placeholder from "./_Placeholder.jsx";
+export default function ShopPage() {
+  return (
+    <Placeholder
+      title="Shop"
+      description="Full catalogue with brand, category, price, storage, and availability filters arrives in Phase 2."
+    />
+  );
+}
+
+=== FILE: src/pages/ProductPage.jsx ===
+import Placeholder from "./_Placeholder.jsx";
+export default function ProductPage() {
+  return (
+    <Placeholder
+      title="Product details"
+      description="Gallery, variants, specs, and add-to-cart arrive in Phase 2."
+    />
+  );
+}
+
+=== FILE: src/pages/CartPage.jsx ===
+import Placeholder from "./_Placeholder.jsx";
+export default function CartPage() {
+  return (
+    <Placeholder
+      title="Cart"
+      description="Live cart with quantity controls, persistence, and toast confirmation arrives in Phase 2."
+    />
+  );
+}
+
+=== FILE: src/pages/CheckoutPage.jsx ===
+import Placeholder from "./_Placeholder.jsx";
+export default function CheckoutPage() {
+  return (
+    <Placeholder
+      title="Checkout"
+      description="Customer details, delivery, and bank transfer / Easypaisa payment flow arrives in Phase 2."
+    />
+  );
+}
+
+=== FILE: src/pages/OrderConfirmationPage.jsx ===
+import Placeholder from "./_Placeholder.jsx";
+export default function OrderConfirmationPage() {
+  return (
+    <Placeholder
+      title="Order confirmation"
+      description="Real order confirmation backed by the API arrives in Phase 2."
+    />
+  );
+}
+
+=== FILE: src/pages/ContactPage.jsx ===
+import Placeholder from "./_Placeholder.jsx";
+export default function ContactPage() {
+  return (
+    <Placeholder
+      title="Contact Techbox"
+      description="Full contact page with store address, hours, and directions arrives in Phase 3 once the client supplies verified details."
+    />
+  );
+}
+
+=== FILE: src/pages/NotFoundPage.jsx ===
+import { Link } from "react-router-dom";
+export default function NotFoundPage() {
+  return (
+    <div className="tb-placeholder">
+      <h1>Page not found</h1>
+      <p>The page you're looking for doesn't exist.</p>
+      <Link to="/" className="tb-btn tb-btn--primary tb-btn--md">Back to home</Link>
+    </div>
+  );
+}
+
+=== FILE: src/pages/_Placeholder.jsx ===
+import { Link } from "react-router-dom";
+export default function Placeholder({ title, description }) {
+  return (
+    <div className="tb-placeholder">
+      <h1>{title}</h1>
+      <p>{description}</p>
+      <Link to="/" className="tb-btn tb-btn--outline tb-btn--md">Back to home</Link>
+    </div>
+  );
+}
+
+=== FILE: .env.development ===
+VITE_USE_MOCKS=true
+VITE_API_BASE_URL=http://localhost:5000

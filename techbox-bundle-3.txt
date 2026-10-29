@@ -1,0 +1,760 @@
+=== FILE: src/admin/layout/AdminLayout.jsx ===
+import { useState } from "react";
+import { Link, NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
+import { LayoutDashboard, Smartphone, Package, ShoppingCart, Users, Settings, LogOut, Menu, X } from "lucide-react";
+
+const navItems = [
+  { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
+  { to: "/admin/products", label: "Products", icon: Smartphone },
+  { to: "/admin/inventory", label: "Inventory", icon: Package },
+  { to: "/admin/orders", label: "Orders", icon: ShoppingCart },
+  { to: "/admin/customers", label: "Customers", icon: Users },
+  { to: "/admin/settings", label: "Settings", icon: Settings },
+];
+
+export default function AdminLayout() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleLogout = () => {
+    localStorage.removeItem("techbox_admin");
+    navigate("/admin/login");
+  };
+
+  return (
+    <div className="tb-admin">
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div className="tb-admin__overlay" onClick={() => setSidebarOpen(false)} />
+      )}
+
+      {/* Sidebar */}
+      <aside className={`tb-admin__sidebar ${sidebarOpen ? "is-open" : ""}`}>
+        <div className="tb-admin__sidebar-header">
+          <Link to="/admin" className="tb-admin__brand">TECHBOX <span>Admin</span></Link>
+          <button className="tb-admin__mobile-close" onClick={() => setSidebarOpen(false)}>
+            <X size={20} />
+          </button>
+        </div>
+        
+        <nav className="tb-admin__nav">
+          {navItems.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.end}
+              className="tb-admin__nav-link"
+              onClick={() => setSidebarOpen(false)}
+            >
+              <item.icon size={18} />
+              {item.label}
+            </NavLink>
+          ))}
+        </nav>
+
+        <div className="tb-admin__sidebar-footer">
+          <button onClick={handleLogout} className="tb-admin__logout">
+            <LogOut size={18} /> Logout
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <div className="tb-admin__main">
+        <header className="tb-admin__header">
+          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+            <button className="tb-admin__mobile-toggle" onClick={() => setSidebarOpen(true)}>
+              <Menu size={24} />
+            </button>
+            <h1 className="tb-admin__page-title">
+              {navItems.find((n) => n.to === location.pathname)?.label || "Admin"}
+            </h1>
+          </div>
+          <div className="tb-admin__user">
+            <div className="tb-admin__avatar">A</div>
+            <span>Admin User</span>
+          </div>
+        </header>
+
+        <main className="tb-admin__content">
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  );
+}
+
+=== FILE: src/admin/pages/AdminLoginPage.jsx ===
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+export default function AdminLoginPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    setLoading(true);
+    // MOCK AUTHENTICATION - Backend integration comes in Phase 6
+    setTimeout(() => {
+      if (email === "admin@techbox.pk" && password === "admin123") {
+        localStorage.setItem("techbox_admin", "true");
+        navigate("/admin");
+      } else {
+        alert("Invalid credentials. Use admin@techbox.pk / admin123");
+        setLoading(false);
+      }
+    }, 800);
+  };
+
+  return (
+    <div className="tb-login">
+      <div className="tb-login__card">
+        <div className="tb-login__brand">TECHBOX</div>
+        <h1 className="tb-login__title">Admin Portal</h1>
+        <p className="tb-login__desc">Sign in to manage your store.</p>
+
+        <form onSubmit={handleLogin} className="tb-login__form">
+          <div className="tb-login__field">
+            <label>Email</label>
+            <input 
+              type="email" 
+              value={email} 
+              onChange={(e) => setEmail(e.target.value)} 
+              placeholder="admin@techbox.pk"
+              required 
+            />
+          </div>
+          <div className="tb-login__field">
+            <label>Password</label>
+            <input 
+              type="password" 
+              value={password} 
+              onChange={(e) => setPassword(e.target.value)} 
+              placeholder="••••••••"
+              required 
+            />
+          </div>
+          <button type="submit" className="tb-btn tb-btn--primary tb-btn--full" disabled={loading}>
+            {loading ? "Signing in..." : "Sign In"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+=== FILE: src/admin/pages/DashboardPage.jsx ===
+import { formatPKR } from "../../data/demoProducts";
+import { ShoppingBag, TrendingUp, AlertTriangle, CheckCircle } from "lucide-react";
+
+const mockStats = [
+  { label: "Total Orders", value: "12", icon: ShoppingBag, trend: "+2 today" },
+  { label: "Revenue (PKR)", value: formatPKR(1540000), icon: TrendingUp, trend: "+12% this week" },
+  { label: "Low Stock", value: "2", icon: AlertTriangle, trend: "Needs attention" },
+  { label: "In Stock", value: "45", icon: CheckCircle, trend: "Healthy" },
+];
+
+const mockOrders = [
+  { id: "TB-1024", customer: "Ali Khan", date: "Today, 2:30 PM", total: 299999, status: "Pending" },
+  { id: "TB-1023", customer: "Sara Ahmed", date: "Today, 11:15 AM", total: 189999, status: "Dispatched" },
+  { id: "TB-1022", customer: "Zainab Malik", date: "Yesterday", total: 149999, status: "Delivered" },
+];
+
+export default function DashboardPage() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-6)" }}>
+      
+      {/* KPI Cards */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "var(--space-4)" }}>
+        {mockStats.map((stat) => (
+          <div key={stat.label} className="tb-admin-card" style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", color: "var(--color-muted)" }}>
+              <span style={{ fontSize: "var(--fs-sm)", fontWeight: 500 }}>{stat.label}</span>
+              <stat.icon size={18} />
+            </div>
+            <div style={{ fontSize: "var(--fs-2xl)", fontWeight: 600, color: "var(--color-charcoal)" }}>{stat.value}</div>
+            <div style={{ fontSize: "var(--fs-xs)", color: stat.label === "Low Stock" ? "#D9534F" : "var(--color-muted)" }}>{stat.trend}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Recent Orders Table */}
+      <div className="tb-admin-card">
+        <h2 style={{ fontSize: "var(--fs-lg)", marginBottom: "var(--space-4)" }}>Recent Orders</h2>
+        <div style={{ overflowX: "auto" }}>
+          <table className="tb-admin-table">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Date</th>
+                <th>Total</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {mockOrders.map((order) => (
+                <tr key={order.id}>
+                  <td style={{ fontWeight: 500 }}>{order.id}</td>
+                  <td>{order.customer}</td>
+                  <td style={{ color: "var(--color-muted)" }}>{order.date}</td>
+                  <td>{formatPKR(order.total)}</td>
+                  <td>
+                    <span className={`tb-badge tb-badge--${order.status.toLowerCase()}`}>
+                      {order.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+=== FILE: src/admin/pages/AdminProductsPage.jsx ===
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { Plus, Search } from "lucide-react";
+import { demoProducts, formatPKR } from "../../data/demoProducts";
+
+export default function AdminProductsPage() {
+  const [search, setSearch] = useState("");
+  const filtered = demoProducts.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
+
+  return (
+    <div className="tb-admin-card">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-5)", flexWrap: "wrap", gap: "var(--space-4)" }}>
+        <div style={{ position: "relative", flex: "1 1 250px", maxWidth: "400px" }}>
+          <Search size={16} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--color-muted)" }} />
+          <input 
+            type="text" 
+            placeholder="Search products..." 
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ width: "100%", padding: "10px 10px 10px 36px", borderRadius: "var(--radius-md)", border: "1px solid var(--border-light)", fontSize: "var(--fs-sm)" }}
+          />
+        </div>
+        <Link to="/admin/products/new" className="tb-btn tb-btn--primary tb-btn--md" style={{ borderRadius: "var(--radius-md)" }}>
+          <Plus size={16} /> Add Product
+        </Link>
+      </div>
+
+      <div style={{ overflowX: "auto" }}>
+        <table className="tb-admin-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>SKU</th>
+              <th>Price</th>
+              <th>Stock</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((p) => (
+              <tr key={p.id}>
+                <td>
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                    <img src={p.image} alt={p.name} style={{ width: "40px", height: "40px", objectFit: "cover", borderRadius: "4px" }} />
+                    <span style={{ fontWeight: 500 }}>{p.name}</span>
+                  </div>
+                </td>
+                <td style={{ color: "var(--color-muted)", fontSize: "var(--fs-sm)" }}>{p.sku}</td>
+                <td>{formatPKR(p.price)}</td>
+                <td>{p.inStock ? "12" : "0"}</td>
+                <td>
+                  <span className={`tb-badge ${p.inStock ? "tb-badge--delivered" : "tb-badge--pending"}`}>
+                    {p.inStock ? "Active" : "Draft"}
+                  </span>
+                </td>
+                <td>
+                  <Link to="/admin/products/new" style={{ color: "var(--color-gold)", fontSize: "var(--fs-sm)", fontWeight: 500 }}>Edit</Link>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+=== FILE: src/admin/pages/AdminProductFormPage.jsx ===
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
+
+export default function AdminProductFormPage() {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setTimeout(() => {
+      alert("Product saved successfully (mocked).");
+      navigate("/admin/products");
+    }, 800);
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-5)" }}>
+      <button onClick={() => navigate("/admin/products")} style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--color-muted)", fontSize: "var(--fs-sm)", width: "fit-content" }}>
+        <ArrowLeft size={16} /> Back to Products
+      </button>
+
+      <form onSubmit={handleSubmit} className="tb-admin-card" style={{ display: "flex", flexDirection: "column", gap: "var(--space-5)" }}>
+        <h2 style={{ fontSize: "var(--fs-lg)", borderBottom: "1px solid var(--border-light)", paddingBottom: "var(--space-3)" }}>Add New Product</h2>
+        
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-4)" }}>
+          <div className="tb-admin-field">
+            <label>Product Name</label>
+            <input type="text" placeholder="e.g. iPhone 15 Pro" required />
+          </div>
+          <div className="tb-admin-field">
+            <label>Brand</label>
+            <select required>
+              <option value="">Select Brand</option>
+              <option value="Apple">Apple</option>
+              <option value="Samsung">Samsung</option>
+              <option value="Google">Google</option>
+            </select>
+          </div>
+          <div className="tb-admin-field">
+            <label>Price (PKR)</label>
+            <input type="number" placeholder="e.g. 250000" required />
+          </div>
+          <div className="tb-admin-field">
+            <label>Stock Quantity</label>
+            <input type="number" placeholder="e.g. 10" required />
+          </div>
+        </div>
+
+        <div className="tb-admin-field">
+          <label>Description</label>
+          <textarea rows="4" placeholder="Enter product description..." required></textarea>
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: "var(--space-3)", marginTop: "var(--space-4)" }}>
+          <button type="button" className="tb-btn tb-btn--outline tb-btn--md" onClick={() => navigate("/admin/products")}>Cancel</button>
+          <button type="submit" className="tb-btn tb-btn--primary tb-btn--md" disabled={loading}>
+            {loading ? "Saving..." : "Save Product"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+=== FILE: src/admin/pages/AdminInventoryPage.jsx ===
+import { demoProducts } from "../../data/demoProducts";
+import { AlertTriangle } from "lucide-react";
+
+export default function AdminInventoryPage() {
+  return (
+    <div className="tb-admin-card">
+      <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "var(--space-4)", color: "#D9534F" }}>
+        <AlertTriangle size={20} />
+        <span style={{ fontSize: "var(--fs-sm)", fontWeight: 500 }}>2 items are running low on stock.</span>
+      </div>
+      
+      <div style={{ overflowX: "auto" }}>
+        <table className="tb-admin-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>SKU</th>
+              <th>Available Quantity</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {demoProducts.map((p, i) => {
+              const stock = i === 0 ? 2 : 15; // Mock stock
+              return (
+                <tr key={p.id}>
+                  <td>
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                      <img src={p.image} alt={p.name} style={{ width: "40px", height: "40px", objectFit: "cover", borderRadius: "4px" }} />
+                      <span style={{ fontWeight: 500 }}>{p.name}</span>
+                    </div>
+                  </td>
+                  <td style={{ color: "var(--color-muted)", fontSize: "var(--fs-sm)" }}>{p.sku}</td>
+                  <td>
+                    <input type="number" defaultValue={stock} style={{ width: "80px", padding: "6px", borderRadius: "4px", border: "1px solid var(--border-light)", textAlign: "center" }} />
+                  </td>
+                  <td>
+                    <span className={`tb-badge ${stock < 5 ? "tb-badge--pending" : "tb-badge--delivered"}`}>
+                      {stock < 5 ? "Low Stock" : "In Stock"}
+                    </span>
+                  </td>
+                  <td>
+                    <button className="tb-btn tb-btn--outline tb-btn--sm">Update</button>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+=== FILE: src/admin/pages/AdminPlaceholderPage.jsx ===
+export default function AdminPlaceholderPage({ title }) {
+  return (
+    <div className="tb-admin-card" style={{ textAlign: "center", padding: "var(--space-9) var(--space-5)", color: "var(--color-muted)" }}>
+      <h2 style={{ fontSize: "var(--fs-xl)", color: "var(--color-charcoal)", marginBottom: "var(--space-2)" }}>{title}</h2>
+      <p>This module is under construction and will be available in the next phase.</p>
+    </div>
+  );
+}
+
+=== FILE: src/App.jsx ===
+import { Routes, Route, Navigate } from "react-router-dom";
+import { CartProvider, useCart } from "./context/CartContext";
+import Navbar from "./components/layout/Navbar.jsx";
+import Footer from "./components/layout/Footer.jsx";
+import HomePage from "./pages/HomePage.jsx";
+import ShopPage from "./pages/ShopPage.jsx";
+import ProductPage from "./pages/ProductPage.jsx";
+import CartPage from "./pages/CartPage.jsx";
+import CheckoutPage from "./pages/CheckoutPage.jsx";
+import OrderConfirmationPage from "./pages/OrderConfirmationPage.jsx";
+import ContactPage from "./pages/ContactPage.jsx";
+import NotFoundPage from "./pages/NotFoundPage.jsx";
+import CartToast from "./components/cart/CartToast.jsx";
+
+// Admin Imports
+import AdminLayout from "./admin/layout/AdminLayout.jsx";
+import AdminLoginPage from "./admin/pages/AdminLoginPage.jsx";
+import DashboardPage from "./admin/pages/DashboardPage.jsx";
+import AdminProductsPage from "./admin/pages/AdminProductsPage.jsx";
+import AdminProductFormPage from "./admin/pages/AdminProductFormPage.jsx";
+import AdminInventoryPage from "./admin/pages/AdminInventoryPage.jsx";
+import AdminPlaceholderPage from "./admin/pages/AdminPlaceholderPage.jsx";
+
+// Protected Route Component
+function RequireAdminAuth({ children }) {
+  const isAuthenticated = localStorage.getItem("techbox_admin") === "true";
+  return isAuthenticated ? children : <Navigate to="/admin/login" replace />;
+}
+
+export default function App() {
+  return (
+    <CartProvider>
+      <Routes>
+        {/* Storefront Routes */}
+        <Route path="/" element={<StorefrontWrapper />} />
+        <Route path="/shop" element={<StorefrontWrapper />} />
+        <Route path="/product/:slug" element={<StorefrontWrapper />} />
+        <Route path="/cart" element={<StorefrontWrapper />} />
+        <Route path="/checkout" element={<StorefrontWrapper />} />
+        <Route path="/order-confirmation/:orderNumber" element={<StorefrontWrapper />} />
+        <Route path="/contact" element={<StorefrontWrapper />} />
+        <Route path="*" element={<StorefrontWrapper />} />
+
+        {/* Admin Routes */}
+        <Route path="/admin/login" element={<AdminLoginPage />} />
+        <Route path="/admin" element={<RequireAdminAuth><AdminLayout /></RequireAdminAuth>}>
+          <Route index element={<DashboardPage />} />
+          <Route path="products" element={<AdminProductsPage />} />
+          <Route path="products/new" element={<AdminProductFormPage />} />
+          <Route path="inventory" element={<AdminInventoryPage />} />
+          <Route path="orders" element={<AdminPlaceholderPage title="Orders Management" />} />
+          <Route path="customers" element={<AdminPlaceholderPage title="Customer Database" />} />
+          <Route path="settings" element={<AdminPlaceholderPage title="Store Settings" />} />
+        </Route>
+      </Routes>
+    </CartProvider>
+  );
+}
+
+function StorefrontWrapper() {
+  const { toast } = useCart();
+  return (
+    <>
+      <Navbar />
+      <main>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/shop" element={<ShopPage />} />
+          <Route path="/product/:slug" element={<ProductPage />} />
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/order-confirmation/:orderNumber" element={<OrderConfirmationPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </main>
+      <Footer />
+      <CartToast toast={toast} onClose={() => {}} />
+    </>
+  );
+}
+
+=== FILE: src/styles/admin.css ===
+/* --- ADMIN DASHBOARD STYLES --- */
+
+.tb-admin {
+  display: flex;
+  min-height: 100vh;
+  background: #F4F6F8;
+  font-family: var(--font-sans);
+}
+
+/* SIDEBAR */
+.tb-admin__sidebar {
+  width: 260px;
+  background: var(--color-midnight);
+  color: var(--color-white);
+  display: flex;
+  flex-direction: column;
+  transition: transform var(--dur-med) var(--ease-out);
+  z-index: 200;
+}
+.tb-admin__sidebar-header {
+  padding: var(--space-5);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-dark);
+}
+.tb-admin__brand {
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--color-white);
+}
+.tb-admin__brand span {
+  color: var(--color-gold);
+  font-weight: 400;
+}
+.tb-admin__mobile-close { display: none; color: var(--color-white); }
+
+.tb-admin__nav {
+  flex: 1;
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.tb-admin__nav-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: var(--fs-sm);
+  transition: all var(--dur-fast);
+}
+.tb-admin__nav-link:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-white);
+}
+.tb-admin__nav-link.active {
+  background: rgba(216, 177, 106, 0.15);
+  color: var(--color-gold);
+  font-weight: 500;
+}
+
+.tb-admin__sidebar-footer {
+  padding: var(--space-4);
+  border-top: 1px solid var(--border-dark);
+}
+.tb-admin__logout {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: var(--fs-sm);
+  width: 100%;
+  padding: 10px 16px;
+  transition: color var(--dur-fast);
+}
+.tb-admin__logout:hover { color: #D9534F; }
+
+/* MAIN AREA */
+.tb-admin__main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.tb-admin__header {
+  background: var(--color-white);
+  height: 70px;
+  padding: 0 var(--space-6);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-light);
+}
+.tb-admin__page-title {
+  font-size: var(--fs-xl);
+  font-weight: 500;
+  color: var(--color-charcoal);
+}
+.tb-admin__user {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+}
+.tb-admin__avatar {
+  width: 32px; height: 32px;
+  background: var(--color-gold);
+  color: var(--color-midnight);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+.tb-admin__mobile-toggle { display: none; }
+
+.tb-admin__content {
+  padding: var(--space-6);
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* CARDS & TABLES */
+.tb-admin-card {
+  background: var(--color-white);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  border: 1px solid var(--border-light);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+}
+.tb-admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+.tb-admin-table th {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-light);
+  color: var(--color-muted);
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 500;
+}
+.tb-admin-table td {
+  padding: 16px;
+  border-bottom: 1px solid var(--border-light);
+  font-size: var(--fs-sm);
+}
+.tb-admin-table tr:last-child td { border-bottom: none; }
+.tb-admin-table tr:hover td { background: #FAFAFA; }
+
+/* BADGES */
+.tb-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.tb-badge--pending { background: #FFF3CD; color: #856404; }
+.tb-badge--dispatched { background: #D1ECF1; color: #0C5460; }
+.tb-badge--delivered { background: #D4EDDA; color: #155724; }
+
+/* LOGIN PAGE */
+.tb-login {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-midnight);
+  padding: var(--space-5);
+}
+.tb-login__card {
+  background: var(--color-white);
+  padding: var(--space-7) var(--space-6);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 420px;
+  box-shadow: var(--shadow-elevated);
+}
+.tb-login__brand {
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--color-midnight);
+  text-align: center;
+  margin-bottom: var(--space-6);
+}
+.tb-login__title {
+  font-size: var(--fs-2xl);
+  font-weight: 500;
+  text-align: center;
+  margin-bottom: var(--space-2);
+}
+.tb-login__desc {
+  text-align: center;
+  color: var(--color-muted);
+  font-size: var(--fs-sm);
+  margin-bottom: var(--space-6);
+}
+.tb-login__form { display: flex; flex-direction: column; gap: var(--space-4); }
+.tb-login__field { display: flex; flex-direction: column; gap: var(--space-2); }
+.tb-login__field label { font-size: var(--fs-sm); font-weight: 500; }
+.tb-login__field input {
+  padding: 12px 16px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  font-size: var(--fs-base);
+  outline: none;
+}
+.tb-login__field input:focus { border-color: var(--color-gold); }
+
+/* FORM FIELDS */
+.tb-admin-field { display: flex; flex-direction: column; gap: 8px; }
+.tb-admin-field label { font-size: var(--fs-sm); font-weight: 500; color: var(--color-charcoal); }
+.tb-admin-field input, .tb-admin-field select, .tb-admin-field textarea {
+  padding: 12px 16px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  font-size: var(--fs-sm);
+  outline: none;
+  font-family: inherit;
+}
+.tb-admin-field input:focus, .tb-admin-field select:focus, .tb-admin-field textarea:focus {
+  border-color: var(--color-gold);
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .tb-admin__sidebar {
+    position: fixed;
+    top: 0; bottom: 0; left: 0;
+    transform: translateX(-100%);
+  }
+  .tb-admin__sidebar.is-open { transform: translateX(0); }
+  .tb-admin__mobile-close { display: block; }
+  .tb-admin__overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 150;
+  }
+  .tb-admin__mobile-toggle { display: block; }
+  .tb-admin__header { padding: 0 var(--space-4); }
+}

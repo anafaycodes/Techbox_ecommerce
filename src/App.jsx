@@ -15,6 +15,13 @@ import DeliveryPage from "./pages/DeliveryPage.jsx";
 import ReturnsPage from "./pages/ReturnsPage.jsx";
 import WarrantyPage from "./pages/WarrantyPage.jsx";
 import PrivacyPage from "./pages/PrivacyPage.jsx";
+import AdminProductEditPage from "./admin/pages/AdminProductEditPage.jsx";
+
+
+
+import PageTransition from "./components/common/PageTransition";
+import { useLocation } from "react-router-dom";
+import { AnimatePresence } from "framer-motion";
 
 // Admin Imports
 import AdminLayout from "./admin/layout/AdminLayout.jsx";
@@ -24,20 +31,29 @@ import AdminProductsPage from "./admin/pages/AdminProductsPage.jsx";
 import AdminProductFormPage from "./admin/pages/AdminProductFormPage.jsx";
 import AdminInventoryPage from "./admin/pages/AdminInventoryPage.jsx";
 import AdminPlaceholderPage from "./admin/pages/AdminPlaceholderPage.jsx";
+import AdminOrdersPage from "./admin/pages/AdminOrdersPage.jsx";
 
 function RequireAdminAuth({ children }) {
-  const isAuthenticated = localStorage.getItem("techbox_admin") === "true";
+  // Check for the REAL token, not the fake boolean
+  const isAuthenticated = !!localStorage.getItem("techbox_token"); 
   return isAuthenticated ? children : <Navigate to="/admin/login" replace />;
 }
 
 // This is the layout for the customer storefront
 function StoreLayout() {
   const { toast } = useCart();
+  const location = useLocation(); // <-- Add this
+
   return (
     <>
       <Navbar />
       <main>
-        <Outlet /> {/* This tells React Router where to put the page content */}
+        {/* Add AnimatePresence here for the exit animation to work */}
+        <AnimatePresence mode="wait">
+          <PageTransition key={location.pathname}>
+            <Outlet />
+          </PageTransition>
+        </AnimatePresence>
       </main>
       <Footer />
       <CartToast toast={toast} onClose={() => {}} />
@@ -70,8 +86,9 @@ export default function App() {
         <Route index element={<DashboardPage />} />
         <Route path="products" element={<AdminProductsPage />} />
         <Route path="products/new" element={<AdminProductFormPage />} />
+        <Route path="products/:id/edit" element={<AdminProductEditPage />} />
         <Route path="inventory" element={<AdminInventoryPage />} />
-        <Route path="orders" element={<AdminPlaceholderPage title="Orders Management" />} />
+        <Route path="orders" element={<AdminOrdersPage />} />
         <Route path="customers" element={<AdminPlaceholderPage title="Customer Database" />} />
         <Route path="settings" element={<AdminPlaceholderPage title="Store Settings" />} />
       </Route>

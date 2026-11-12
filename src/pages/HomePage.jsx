@@ -22,16 +22,19 @@ export default function HomePage() {
   const { addToCart } = useCart();
   const [tab, setTab] = useState("All");
   
-  // Fetch real products from C# Backend
+  // 1. ADDED LOADING STATE HERE
   const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // 2. ADDED .finally() TO REMOVE LOADING STATE
   useEffect(() => {
-    getProducts().then(data => setProducts(data)).catch(console.error);
+    getProducts()
+      .then(data => setProducts(data))
+      .catch(console.error)
+      .finally(() => setLoading(false)); 
   }, []);
 
-  // Safely find a featured product or fallback to the first one
   const featured = products.find((p) => p.featured) || products[0] || { image: "", name: "", price: 0 };
-  
-  // Create the lineup based on the selected tab (All, iPhone, Android)
   const lineup = tab === "All" ? products : products.filter((p) => p.category === tab);
 
   return (
@@ -115,13 +118,34 @@ export default function HomePage() {
               ))}
             </div>
           </div>
-          <span className="tb-demo-banner">Live Catalogue — these are real products from the database.</span>
-          <div className="tb-lineup__count">{lineup.length} product{lineup.length === 1 ? "" : "s"}</div>
-          <div className="tb-lineup__grid">
-            {lineup.map((p) => (
-              <ProductCard key={p.id} product={{...p, image: p.imageUrl}} onAdd={() => addToCart({...p, image: p.imageUrl})} />
-            ))}
+          {/* <span className="tb-demo-banner">Live Catalogue — these are real products from the database.</span> */}
+          
+          <div className="tb-lineup__count">
+            {loading ? "Loading products..." : `${lineup.length} product${lineup.length === 1 ? "" : "s"}`}
           </div>
+          
+          {/* 3. SKELETON LOADER VS REAL DATA */}
+          {loading ? (
+            <div className="tb-lineup__grid">
+              {[1, 2, 3, 4].map((n) => (
+                <div key={n} style={{ background: "var(--color-white)", borderRadius: "var(--radius-md)", border: "1px solid var(--border-light)", overflow: "hidden" }}>
+                  <div style={{ aspectRatio: "4/5", background: "#EAEAEA", animation: "tb-fade-up 1s infinite alternate" }} />
+                  <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <div style={{ height: "12px", width: "40%", background: "#EAEAEA", borderRadius: "4px" }} />
+                    <div style={{ height: "16px", width: "80%", background: "#EAEAEA", borderRadius: "4px" }} />
+                    <div style={{ height: "20px", width: "50%", background: "#EAEAEA", borderRadius: "4px", marginTop: "8px" }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="tb-lineup__grid">
+              {lineup.map((p) => (
+                <ProductCard key={p.id} product={{...p, image: p.imageUrl}} onAdd={() => addToCart({...p, image: p.imageUrl})} />
+              ))}
+            </div>
+          )}
+
         </div>
       </section>
 

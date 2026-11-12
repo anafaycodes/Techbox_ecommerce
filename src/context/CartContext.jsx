@@ -36,11 +36,16 @@ export function CartProvider({ children }) {
     setCart((prev) => prev.map((item) => item.id === id ? { ...item, qty } : item));
   };
 
+  // THIS WAS MISSING!
+  const clearCart = () => {
+    setCart([]);
+  };
+
   const cartCount = cart.reduce((sum, item) => sum + item.qty, 0);
   const cartTotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
 
   return (
-    <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQty, cartCount, cartTotal, toast }}>
+    <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQty, clearCart, cartCount, cartTotal, toast }}>
       {children}
     </CartContext.Provider>
   );

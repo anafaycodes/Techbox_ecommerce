@@ -6,7 +6,9 @@ export default function Footer() {
       <div className="tb-container">
         <div className="tb-footer__grid">
           <div>
-            <div className="tb-footer__brand">TECHBOX</div>
+            <div className="tb-footer__brand" style={{ marginBottom: "var(--space-4)" }}>
+              <img src="/logo.png.png" alt="Techbox" style={{ height: "80px", width: "auto" }} />
+            </div>
             <p className="tb-footer__tagline">
               Premium smartphones. Genuine products. Straightforward service from Saddar, Karachi.
             </p>

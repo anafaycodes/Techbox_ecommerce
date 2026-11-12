@@ -23,7 +23,6 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Close mobile menu when route changes
   useEffect(() => {
     setMobileOpen(false);
   }, [location.pathname, location.search]);
@@ -31,8 +30,23 @@ export default function Navbar() {
   return (
     <header className={`tb-navbar ${scrolled ? "is-scrolled" : ""}`}>
       <div className="tb-container tb-navbar__inner">
-        <Link to="/" className="tb-navbar__brand" aria-label="Techbox home">TECHBOX</Link>
+        
+        {/* LOGO */}
+        <Link to="/" className="tb-navbar__brand" aria-label="Techbox home" style={{ display: "flex", alignItems: "center", height: "100%" }}>
+          <img 
+            src="/logo.png.png" 
+            alt="Techbox" 
+            style={{ 
+              height: "90px", 
+              width: "auto", 
+              objectFit: "contain",
+              marginTop: "8px",
+              marginBottom: "8px"
+            }} 
+          />
+        </Link>
 
+        {/* DESKTOP LINKS */}
         <nav className="tb-navbar__links" aria-label="Primary">
           {navLinks.map((l) => (
             <Link 
@@ -45,6 +59,7 @@ export default function Navbar() {
           ))}
         </nav>
 
+        {/* ACTIONS */}
         <div className="tb-navbar__actions">
           <div className="tb-navbar__search" role="search">
             <Search size={16} aria-hidden="true" />
@@ -75,6 +90,7 @@ export default function Navbar() {
         </div>
       </div>
 
+      {/* MOBILE MENU */}
       {mobileOpen && (
         <nav className="tb-navbar__mobile" aria-label="Mobile primary">
           {navLinks.map((l) => (

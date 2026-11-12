@@ -18,7 +18,18 @@ export default function ProductCard({ product, onAdd }) {
     >
       {/* Changed product.slug to product.id */}
       <Link to={`/product/${product.id || product.slug}`} className="tb-product-card__media">
-        <img src={imageUrl} alt={product.name} loading="lazy" />
+        <img 
+          src={imageUrl} 
+          alt={product.name} 
+          loading="lazy" 
+          style={{ 
+            width: "100%", 
+            height: "100%", 
+            objectFit: "cover",
+            backgroundColor: "#EAEAEA", // Shows a gray box while image downloads
+            transition: "opacity 0.3s ease"
+          }} 
+        />
         {product.badge && <span className="tb-product-card__badge">{product.badge}</span>}
       </Link>
       <div className="tb-product-card__body">

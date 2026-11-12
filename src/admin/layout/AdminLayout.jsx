@@ -16,8 +16,9 @@ export default function AdminLayout() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleLogout = () => {
+    const handleLogout = () => {
     localStorage.removeItem("techbox_admin");
+    localStorage.removeItem("techbox_token"); // <-- Add this!
     navigate("/admin/login");
   };
 

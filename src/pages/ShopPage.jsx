@@ -4,6 +4,7 @@ import { brands } from "../data/demoProducts";
 import { getProducts } from "../services/apiClient";
 import ProductCard from "../components/product/ProductCard";
 import { useCart } from "../context/CartContext";
+import { motion } from "framer-motion";
 
 export default function ShopPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -87,18 +88,37 @@ export default function ShopPage() {
         </select>
       </div>
 
-      {filtered.length === 0 ? (
+            {filtered.length === 0 ? (
         <div className="tb-placeholder" style={{ minHeight: "40vh" }}>
           <h2>No phones found</h2>
           <p>Try clearing your filters or searching for something else.</p>
           <button className="tb-btn tb-btn--outline" onClick={() => { setSearchParams({}); setSearchInput(""); }}>Clear all filters</button>
         </div>
       ) : (
-        <div className="tb-lineup__grid">
+        <motion.div 
+          className="tb-lineup__grid"
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: { opacity: 0 },
+            visible: {
+              opacity: 1,
+              transition: { staggerChildren: 0.08 } // 80ms delay between each card
+            }
+          }}
+        >
           {filtered.map((p) => (
-            <ProductCard key={p.id} product={{...p, image: p.imageUrl}} onAdd={() => addToCart({...p, image: p.imageUrl})} />
+            <motion.div
+              key={p.id}
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } }
+              }}
+            >
+              <ProductCard product={{...p, image: p.imageUrl}} onAdd={() => addToCart({...p, image: p.imageUrl})} />
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       )}
     </div>
   );

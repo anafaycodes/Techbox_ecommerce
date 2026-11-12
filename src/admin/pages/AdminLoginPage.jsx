@@ -7,25 +7,39 @@ export default function AdminLoginPage() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+    const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
-    // MOCK AUTHENTICATION - Backend integration comes in Phase 6
-    setTimeout(() => {
-      if (email === "admin@techbox.pk" && password === "admin123") {
-        localStorage.setItem("techbox_admin", "true");
-        navigate("/admin");
-      } else {
-        alert("Invalid credentials. Use admin@techbox.pk / admin123");
-        setLoading(false);
-      }
-    }, 800);
+
+    try {
+      const res = await fetch("http://localhost:5012/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+
+      if (!res.ok) throw new Error("Invalid credentials");
+      
+      const data = await res.json();
+      
+      // Save the real token from C#
+      localStorage.setItem("techbox_admin", "true"); // Kept for your existing layout check
+      localStorage.setItem("techbox_token", data.token); 
+      
+      navigate("/admin");
+    } catch (error) {
+      alert("Invalid email or password");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="tb-login">
       <div className="tb-login__card">
-        <div className="tb-login__brand">TECHBOX</div>
+        <div className="tb-login__brand" style={{ display: "flex", justifyContent: "center", marginBottom: "var(--space-6)" }}>
+         <img src="/logo.png.png" alt="Techbox" style={{ height: "120px", width: "auto" }} />
+        </div>
         <h1 className="tb-login__title">Admin Portal</h1>
         <p className="tb-login__desc">Sign in to manage your store.</p>
 

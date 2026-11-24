@@ -220,15 +220,30 @@ h1, h2, h3, h4, h5, h6, p { margin: 0; }
   background: radial-gradient(circle at 70% 40%, rgba(216, 177, 106, 0.15), transparent 55%),
               linear-gradient(180deg, var(--color-midnight) 0%, var(--color-navy) 100%);
   color: var(--color-white);
-  padding: var(--space-9) 0;
+  padding-top: 40px;    /* Small, safe space from the navbar */
+  padding-bottom: 80px; /* Safe space at the bottom */
   margin-top: 0;
-  padding-top: var(--space-9);
 }
+
+/* Ensure the inner grid is aligned properly */
 .tb-hero__inner {
   display: grid;
   grid-template-columns: 1.1fr 1fr;
   gap: var(--space-8);
+  align-items: center; 
+  width: 100%;
+}
+
+/* Fix the image container so it doesn't stretch endlessly */
+.tb-hero__visual {
+  position: relative;
+  height: 500px; /* Fixed height instead of aspect-ratio */
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 40%, rgba(216, 177, 106, 0.25), transparent 60%);
+  display: flex;
   align-items: center;
+  justify-content: center;
 }
 .tb-hero__title {
   font-size: var(--fs-hero);
@@ -291,26 +306,55 @@ h1, h2, h3, h4, h5, h6, p { margin: 0; }
 .tb-hero__visual-meta .price { color: var(--color-gold); font-weight: 600; }
 
 .tb-brand-strip {
-  background: var(--color-midnight);
+  background: var(--color-navy);
   border-top: 1px solid var(--border-dark);
   border-bottom: 1px solid var(--border-dark);
   padding: var(--space-5) 0;
-}
-.tb-brand-strip__inner {
+  overflow: hidden; /* Hides the scroll */
   display: flex;
-  gap: var(--space-7);
+}
+
+.tb-brand-strip__marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 35s linear infinite;
+}
+
+.tb-brand-strip__marquee:hover {
+  animation-play-state: paused; /* Pauses when hovered */
+}
+
+.tb-brand-strip__group {
+  display: flex;
+  align-items: center;
+  gap: 120px; /* HUGE space between logos */
+  padding-right: 120px; /* MUST MATCH GAP exactly */
+  flex-shrink: 0; /* Prevents the group from squishing */
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); } /* Moves exactly 1 group width */
+}
+
+.tb-brand-strip__link {
+  display: flex;
   align-items: center;
   justify-content: center;
-  flex-wrap: wrap;
+  height: 32px; /* Baseline height */
 }
-.tb-brand-strip__link {
-  font-size: var(--fs-lg);
-  font-weight: 500;
-  letter-spacing: 0.05em;
-  color: rgba(255, 255, 255, 0.55);
-  transition: color var(--dur-fast);
+
+.tb-brand-strip__link img {
+  height: 100%;
+  width: auto;
+  object-fit: contain;
+  opacity: 0.5;
+  transition: opacity var(--dur-fast);
 }
-.tb-brand-strip__link:hover { color: var(--color-gold); }
+
+.tb-brand-strip__link:hover img {
+  opacity: 1;
+}
 
 .tb-lineup { padding: var(--space-9) 0; background: var(--color-ivory); }
 .tb-lineup__head {
@@ -660,4 +704,149 @@ h1, h2, h3, h4, h5, h6, p { margin: 0; }
   .tb-cart-layout {
     grid-template-columns: 1fr !important;
   }
+}
+/* --- FLOATING WHATSAPP BUTTON --- */
+.tb-whatsapp-float {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  background-color: #25D366; /* Official WhatsApp Green */
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 15px;
+  box-shadow: 0 4px 14px rgba(37, 211, 102, 0.4);
+  z-index: 9999;
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.tb-whatsapp-float:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 6px 20px rgba(37, 211, 102, 0.6);
+  background-color: #1ebe5d;
+}
+
+/* Mobile responsive version (just the icon) */
+@media (max-width: 768px) {
+  .tb-whatsapp-float {
+    bottom: 20px;
+    right: 20px;
+    padding: 14px;
+    border-radius: 50%;
+  }
+  .tb-whatsapp-text {
+    display: none; /* Hides text on mobile to save space */
+  }
+}
+/* --- PREMIUM HERO FALLBACK PHONE --- */
+.tb-hero-fallback {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* The glowing aura behind the phone */
+.tb-hero-glow {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(216, 177, 106, 0.4) 0%, rgba(216, 177, 106, 0) 70%);
+  border-radius: 50%;
+  z-index: 0;
+  filter: blur(20px);
+}
+
+/* The Phone Body */
+.tb-hero-phone {
+  position: relative;
+  width: 220px;
+  height: 440px;
+  background: linear-gradient(135deg, #2a2a2a, #111);
+  border-radius: 40px;
+  border: 2px solid rgba(216, 177, 106, 0.3); /* Gold trim */
+  box-shadow: 
+    0 25px 50px rgba(0,0,0,0.5),
+    inset 0 0 0 4px #000;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px;
+}
+
+/* The Notch */
+.tb-hero-phone__notch {
+  width: 80px;
+  height: 25px;
+  background: #000;
+  border-bottom-left-radius: 15px;
+  border-bottom-right-radius: 15px;
+  position: absolute;
+  top: 10px;
+  z-index: 2;
+}
+
+/* The Screen */
+.tb-hero-phone__screen {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, #0A1B23 0%, #07151C 100%);
+  border-radius: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+/* A sleek gradient overlay on the screen */
+.tb-hero-phone__screen::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(45deg, rgba(255,255,255,0.05) 0%, transparent 100%);
+}
+
+.tb-hero-phone__logo {
+  color: var(--color-gold);
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+/* The floating shadow beneath the phone */
+.tb-hero-phone-shadow {
+  position: absolute;
+  bottom: 20px;
+  width: 150px;
+  height: 20px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 50%;
+  filter: blur(10px);
+  z-index: 0;
+}
+/* --- PREMIUM CUSTOM CURSORS --- */
+
+/* 1. Default Cursor (Navy fill with Gold border) */
+body, html {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="24" viewBox="0 0 20 24"><path d="M0 0 L0 20 L5.5 15 L9 22 L12 20.5 L8.5 13.5 L16 13.5 Z" fill="%2307151C" stroke="%23D8B16A" stroke-width="1.5" stroke-linejoin="round"/></svg>') 0 0, auto;
+}
+
+/* 2. Clickable Cursor (Gold fill with Navy border) */
+a, button, [role="button"], select, input[type="submit"], .tb-btn, .tb-filter-select {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="%23D8B16A" stroke="%2307151C" stroke-width="2"/></svg>') 12 12, pointer !important;
+}
+
+/* 3. Text Inputs (Keep the standard text cursor for easy typing) */
+input[type="text"], input[type="email"], input[type="number"], input[type="search"], textarea {
+  cursor: text;
 }

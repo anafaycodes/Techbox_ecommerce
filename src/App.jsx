@@ -16,6 +16,7 @@ import ReturnsPage from "./pages/ReturnsPage.jsx";
 import WarrantyPage from "./pages/WarrantyPage.jsx";
 import PrivacyPage from "./pages/PrivacyPage.jsx";
 import AdminProductEditPage from "./admin/pages/AdminProductEditPage.jsx";
+import WhatsAppButton from "./components/common/WhatsAppButton";
 
 
 
@@ -42,13 +43,12 @@ function RequireAdminAuth({ children }) {
 // This is the layout for the customer storefront
 function StoreLayout() {
   const { toast } = useCart();
-  const location = useLocation(); // <-- Add this
+  const location = useLocation();
 
   return (
     <>
       <Navbar />
       <main>
-        {/* Add AnimatePresence here for the exit animation to work */}
         <AnimatePresence mode="wait">
           <PageTransition key={location.pathname}>
             <Outlet />
@@ -57,6 +57,9 @@ function StoreLayout() {
       </main>
       <Footer />
       <CartToast toast={toast} onClose={() => {}} />
+      
+      {/* ADD THE FLOATING WHATSAPP BUTTON HERE */}
+      <WhatsAppButton /> 
     </>
   );
 }

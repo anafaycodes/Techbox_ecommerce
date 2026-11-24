@@ -1,10 +1,8 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { brands } from "../data/demoProducts";
 import { getProducts } from "../services/apiClient";
 import ProductCard from "../components/product/ProductCard";
 import { useCart } from "../context/CartContext";
-import { motion } from "framer-motion";
 
 export default function ShopPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -22,6 +20,9 @@ export default function ShopPage() {
   useEffect(() => {
     getProducts().then(data => setProducts(data)).catch(console.error);
   }, []);
+
+  // Automatically get unique brands from the database
+  const availableBrands = ["All", ...new Set(products.map(p => p.brand))];
 
   useEffect(() => {
     setSearchInput(urlSearch);
@@ -71,8 +72,7 @@ export default function ShopPage() {
         </div>
 
         <select value={urlBrand} onChange={(e) => updateFilters("brand", e.target.value)} className="tb-filter-select">
-          <option value="All">All Brands</option>
-          {brands.map(b => <option key={b} value={b}>{b}</option>)}
+          {availableBrands.map(b => <option key={b} value={b}>{b === "All" ? "All Brands" : b}</option>)}
         </select>
 
         <select value={urlCategory} onChange={(e) => updateFilters("category", e.target.value)} className="tb-filter-select">
@@ -88,37 +88,18 @@ export default function ShopPage() {
         </select>
       </div>
 
-            {filtered.length === 0 ? (
+      {filtered.length === 0 ? (
         <div className="tb-placeholder" style={{ minHeight: "40vh" }}>
           <h2>No phones found</h2>
           <p>Try clearing your filters or searching for something else.</p>
           <button className="tb-btn tb-btn--outline" onClick={() => { setSearchParams({}); setSearchInput(""); }}>Clear all filters</button>
         </div>
       ) : (
-        <motion.div 
-          className="tb-lineup__grid"
-          initial="hidden"
-          animate="visible"
-          variants={{
-            hidden: { opacity: 0 },
-            visible: {
-              opacity: 1,
-              transition: { staggerChildren: 0.08 } // 80ms delay between each card
-            }
-          }}
-        >
+        <div className="tb-lineup__grid">
           {filtered.map((p) => (
-            <motion.div
-              key={p.id}
-              variants={{
-                hidden: { opacity: 0, y: 20 },
-                visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } }
-              }}
-            >
-              <ProductCard product={{...p, image: p.imageUrl}} onAdd={() => addToCart({...p, image: p.imageUrl})} />
-            </motion.div>
+            <ProductCard key={p.id} product={{...p, image: p.imageUrl}} onAdd={() => addToCart({...p, image: p.imageUrl})} />
           ))}
-        </motion.div>
+        </div>
       )}
     </div>
   );

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { ShieldCheck, Truck, Headset, MapPin, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { brands, formatPKR } from "../data/demoProducts";
+import { formatPKR } from "../data/demoProducts";
 import { getProducts } from "../services/apiClient";
 import ProductCard from "../components/product/ProductCard";
 import SectionHeading from "../components/common/SectionHeading";
@@ -10,9 +10,21 @@ import ScrollReveal from "../components/common/ScrollReveal";
 import Button from "../components/common/Button";
 import { useCart } from "../context/CartContext";
 
+// Replaced text brands with premium SVG logos
+const premiumBrands = [
+  { name: "Apple", logo: "https://cdn.simpleicons.org/apple/ffffff", scale: 1 },
+  { name: "Samsung", logo: "https://cdn.simpleicons.org/samsung/ffffff", scale: 2.5 }, // Made much bigger
+  { name: "Google", logo: "https://cdn.simpleicons.org/google/ffffff", scale: 1.2 },
+  { name: "OnePlus", logo: "https://cdn.simpleicons.org/oneplus/ffffff", scale: 1.3 },
+  { name: "Xiaomi", logo: "https://cdn.simpleicons.org/xiaomi/ffffff", scale: 1.2 },
+  { name: "Oppo", logo: "https://cdn.simpleicons.org/oppo/ffffff", scale: 2.2 }, // Made bigger
+  { name: "Vivo", logo: "https://cdn.simpleicons.org/vivo/ffffff", scale: 2.2 }, // Made bigger
+  { name: "Huawei", logo: "https://cdn.simpleicons.org/huawei/ffffff", scale: 1.2 }
+];
+
 const whyFeatures = [
   { icon: ShieldCheck, title: "Genuine products", desc: "Sourced from trusted channels. Condition and specs stated clearly on every listing." },
-  { icon: Truck, title: "Delivery options", desc: "Local delivery in Karachi, with out-of-city shipping available. Confirm details before ordering." },
+  { icon: Truck, title: "Delivery options", desc: "Local delivery in Karachi, with nationwide shipping available. Confirm details before ordering." },
   { icon: Headset, title: "Real support", desc: "Talk to an actual person at the store before, during, and after your purchase." },
   { icon: MapPin, title: "Visit us in Saddar", desc: "See the phone in person at Star City Mall before you decide." },
 ];
@@ -22,11 +34,9 @@ export default function HomePage() {
   const { addToCart } = useCart();
   const [tab, setTab] = useState("All");
   
-  // 1. ADDED LOADING STATE HERE
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // 2. ADDED .finally() TO REMOVE LOADING STATE
   useEffect(() => {
     getProducts()
       .then(data => setProducts(data))
@@ -72,7 +82,7 @@ export default function HomePage() {
             </motion.div>
             <div className="tb-hero__trust">
               <span><ShieldCheck size={16} aria-hidden="true" /> Genuine products</span>
-              <span><Truck size={16} aria-hidden="true" /> Karachi delivery</span>
+              <span><Truck size={16} aria-hidden="true" /> Nationwide Delivery</span>
             </div>
           </div>
 
@@ -82,7 +92,8 @@ export default function HomePage() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
           >
-            {featured.image && (
+            {/* If a real featured product exists, show it. Otherwise, show the premium animated fallback */}
+            {featured.image ? (
               <>
                 <img src={featured.image} alt={featured.name} />
                 <div className="tb-hero__visual-meta">
@@ -93,16 +104,51 @@ export default function HomePage() {
                   <span className="price">{formatPKR(featured.price)}</span>
                 </div>
               </>
+            ) : (
+              /* PREMIUM FLOATING PHONE FALLBACK */
+              <div className="tb-hero-fallback">
+                <div className="tb-hero-glow" />
+                <motion.div
+                  className="tb-hero-phone"
+                  animate={reduced ? {} : { y: [0, -15, 0] }}
+                  transition={{ repeat: Infinity, duration: 5, ease: "easeInOut" }}
+                >
+                  <div className="tb-hero-phone__notch" />
+                  <div className="tb-hero-phone__screen">
+                    <div className="tb-hero-phone__logo">TECHBOX</div>
+                  </div>
+                </motion.div>
+                
+                <motion.div
+                  className="tb-hero-phone-shadow"
+                  animate={reduced ? {} : { scale: [1, 0.9, 1], opacity: [0.3, 0.15, 0.3] }}
+                  transition={{ repeat: Infinity, duration: 5, ease: "easeInOut" }}
+                />
+              </div>
             )}
           </motion.div>
         </div>
       </section>
 
-      <section className="tb-brand-strip" aria-label="Shop by brand">
-        <div className="tb-container tb-brand-strip__inner">
-          {brands.map((b) => (
-            <Link key={b} to={`/shop?brand=${encodeURIComponent(b)}`} className="tb-brand-strip__link">{b}</Link>
-          ))}
+      {/* PREMIUM HORIZONTAL SCROLLING BRAND STRIP */}
+                 <section className="tb-brand-strip" aria-label="Shop by brand">
+        <div className="tb-brand-strip__marquee">
+          {/* First Group */}
+          <div className="tb-brand-strip__group">
+            {premiumBrands.map((b, index) => (
+              <Link key={index} to={`/shop?brand=${encodeURIComponent(b.name)}`} className="tb-brand-strip__link">
+                <img src={b.logo} alt={b.name} style={{ transform: `scale(${b.scale})` }} />
+              </Link>
+            ))}
+          </div>
+          {/* Second Group (Duplicate for seamless loop) */}
+          <div className="tb-brand-strip__group" aria-hidden="true">
+            {premiumBrands.map((b, index) => (
+              <Link key={index} to={`/shop?brand=${encodeURIComponent(b.name)}`} className="tb-brand-strip__link">
+                <img src={b.logo} alt={b.name} style={{ transform: `scale(${b.scale})` }} />
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -118,13 +164,11 @@ export default function HomePage() {
               ))}
             </div>
           </div>
-          {/* <span className="tb-demo-banner">Live Catalogue — these are real products from the database.</span> */}
           
           <div className="tb-lineup__count">
             {loading ? "Loading products..." : `${lineup.length} product${lineup.length === 1 ? "" : "s"}`}
           </div>
           
-          {/* 3. SKELETON LOADER VS REAL DATA */}
           {loading ? (
             <div className="tb-lineup__grid">
               {[1, 2, 3, 4].map((n) => (
@@ -145,7 +189,6 @@ export default function HomePage() {
               ))}
             </div>
           )}
-
         </div>
       </section>
 
